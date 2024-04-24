@@ -74,7 +74,7 @@ static ec_slave_config_state_t sc1_ana_in_state = {};
 static ec_slave_config_t *sc2;
 static ec_slave_config_state_t sc2_ana_in_state = {};
 
-
+static CmdPanel * cmdptr=NULL;
 // Timer
 static unsigned int sig_alarms = 0;
 static unsigned int user_alarms = 0;
@@ -100,6 +100,7 @@ static unsigned int counter = 0;
 
 static unsigned int blink = 0x00;
 static uint8_t *domain_pd = NULL;
+
 
 #define BusCouplerPos1 0, 0
 
@@ -318,7 +319,7 @@ void cyclic_task()
         float *Tr_data;
         Tr_data=(float *)&ssi;
 
-        PIDSetpointSet(pid_ptr,10.0);
+        PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
         PIDInputSet(pid_ptr,*Tr_data);
         PIDCompute(pid_ptr);
         float output=pid_ptr->output;
@@ -335,6 +336,11 @@ void cyclic_task()
 
         EC_WRITE_U16(domain_pd + off_bytes_0x7011, output1);
         printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011));
+
+        std::cout<<"Keyboard Value\n"<<cmdptr->uservalue.direction<<'\n';
+        std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
+
+        std::cout<<"---------------"<<std::endl;
 
     }
 
@@ -377,12 +383,14 @@ int main(int argc, char **argv)
     if (argc < 2)
         std::cout << "No Kp" << std::endl;
     else
-    {}
+    {
+        Kp=atof(argv[1]);
+    }
         //Kp = std::atof(argv[1]);
     std::cout<<"Kp:\n"<<Kp<<'\n';
 
    // std::unique_ptr<CmdPanel> cmd_ptr=std::make_unique<KeyBoard>();
-   CmdPanel * cmd_ptr=new KeyBoard();
+    cmdptr=new KeyBoard();
 
 
     struct sigaction sa;
@@ -493,11 +501,11 @@ int main(int argc, char **argv)
             cyclic_task();
             user_alarms++;
         }
-        std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
-        std::cout<<"-------------------\n";
+       // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
+      //  std::cout<<"-------------------\n";
     }
     free(pid_ptr);
-    delete cmd_ptr;
+    delete cmdptr;
     return 0;
 }
 
