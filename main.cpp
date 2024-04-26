@@ -325,7 +325,7 @@ void cyclic_task()
         float output=pid_ptr->output;
 
         printf("SSI: value2=%f\n",*Tr_data);
-        counter = 10;
+        counter = 2;
 
         printf("PID OUTPUT:%f\n",output);
 
@@ -379,15 +379,19 @@ void signal_handler(int signum)
 
 int main(int argc, char **argv)
 {
-    float Kp=0.01;
+    float Kp=0.01,Kd=0;
     if (argc < 2)
         std::cout << "No Kp" << std::endl;
+    else if(argc==2)
+        Kp=atof(argv[1]);
     else
     {
         Kp=atof(argv[1]);
+        Kd=atof(argv[2]);
     }
+   
+    
         //Kp = std::atof(argv[1]);
-    std::cout<<"Kp:\n"<<Kp<<'\n';
 
    // std::unique_ptr<CmdPanel> cmd_ptr=std::make_unique<KeyBoard>();
     cmdptr=new KeyBoard();
@@ -480,7 +484,7 @@ int main(int argc, char **argv)
 
     printf("Starting timer...\n");
     tv.it_interval.tv_sec = 0;
-    tv.it_interval.tv_usec = 1000000 / FREQUENCY;
+    tv.it_interval.tv_usec = 1000000 / FREQUENCY;//10 ms  运行一次signal_handler
     tv.it_value.tv_sec = 0;
     tv.it_value.tv_usec = 2000;
     if (setitimer(ITIMER_REAL, &tv, NULL))
@@ -490,7 +494,7 @@ int main(int argc, char **argv)
     }
 
     pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
-    PIDInit(pid_ptr,Kp,0,0,0.1,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
 
     printf("Started.\n");
     while (1)
