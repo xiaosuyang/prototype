@@ -24,11 +24,17 @@ set(CMAKE_CXX_COMPILER "${CROSS_CHAIN_PATH}/bin/arm-linux-gnueabihf-g++")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/control)
+file(GLOB INCLUDE_DIRS "include/*")
+include_directories(${INCLUDE_DIRS})
 
 
-file(GLOB SRC_FILE "control/*.cpp" "interface/*.cpp")
+file(GLOB_RECURSE SRC_FILE "*.cpp")
+file(GLOB_RECURSE BUILD_CPP_FILES "build/*.cpp")
+list(REMOVE_ITEM SRC_FILE ${BUILD_CPP_FILES})
+foreach(file ${SRC_FILE})
+    message(STATUS "${file}")
+endforeach()
 
-add_executable(master main.cpp ${SRC_FILE})
+add_executable(master ${SRC_FILE})
 
 target_link_libraries(master ${CMAKE_CURRENT_SOURCE_DIR}/output/lib/libethercat.so -pthread)

@@ -44,8 +44,9 @@
 #include<memory>
 /****************************************************************************/
 #include "ecrt.h"
-#include"control/pid_controller.h"
+#include"pid_controller.h"
 #include "interface/cmdpanel.h"
+#include "datalogger.h"
 /****************************************************************************/
 
 // Application parameters
@@ -219,6 +220,7 @@ ec_sync_info_t slave_1_syncs[] = {
 
 int fd=-1;
 struct sockaddr_in saddr;
+DataLogger& logger=DataLogger::GET();
 
 void check_domain_state(void)
 {
@@ -342,6 +344,9 @@ void cyclic_task()
 
         std::cout<<"---------------"<<std::endl;
 
+        logger.rj2=*Tr_data;
+        logger.rj2des=cmdptr->uservalue.direction;
+        logger.Savedata();
     }
 
 
