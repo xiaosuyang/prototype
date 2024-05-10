@@ -59,7 +59,7 @@
 
 
 #define BIGNUM 100000000.0
-PIDControl* pid_ptr;
+PIDControl* PID_ptr_M;//矢状面3关节，j2,j3,j4;
 
 /****************************************************************************/
 
@@ -215,19 +215,23 @@ void cyclic_task()
         unsigned long ssi[4];
        // std::vector<unsigned long> ssi;
         uint16_t output1=0;
-        ssi[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);
-        ssi[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
-        ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
+        ssi[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);//RJ2
+        ssi[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);//RJ3
+        ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);//RJ4
         ssi[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
        // float *trdata;
         float *Tr_data;
         Tr_data=(float *)&ssi;
-        for(int i=0;i<4;i++)
+        for(int i=0;i<3;i++)
         {
-            Tr_data=(float *)&ssi[i];
             std::cout<<"角度"<<i<<'\n'<<*Tr_data<<'\n'; 
+            Tr_data=(float *)&ssi[i];
+            PIDSetpointSet(&PID_ptr_M[i],0);
+            PIDInputSet(&PID_ptr_M[i],*Tr_data);
+            PIDCompute(&PID_ptr_M[i]);
+            float output=PID_ptr_M[i].output;
+            output1=(uint16_t)((output+10)/20*65536);
         }
-
     //     PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
     //     PIDInputSet(pid_ptr,*Tr_data);
     //     PIDCompute(pid_ptr);
@@ -247,10 +251,9 @@ void cyclic_task()
     //     std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
 
     //     std::cout<<"---------------"<<std::endl;
-
-    //     logger.rj2=*Tr_data;
-    //     logger.rj2des=cmdptr->uservalue.direction;
-    //     logger.Savedata();
+        logger.rj2=*Tr_data;
+        logger.rj2des=cmdptr->uservalue.direction;
+        logger.Savedata();
     }
 
 
@@ -420,8 +423,13 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
-    PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
+    float sampletime=0.02;
+   // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
+   // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
+    PID_ptr_M=new PIDControl[3];
+    PIDInit(&PID_ptr_M[0],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[1],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[2],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
 
     printf("Started.\n");
     while (1)
@@ -435,7 +443,8 @@ int main(int argc, char **argv)
        // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
         std::cout<<"-------------------\n";
     }
-    free(pid_ptr);
+  
+    delete [] PID_ptr_M;
     delete cmdptr;
     return 0;
 }
