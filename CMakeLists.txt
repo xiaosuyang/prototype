@@ -25,6 +25,8 @@ set(CMAKE_CXX_COMPILER "${CROSS_CHAIN_PATH}/bin/arm-linux-gnueabihf-g++")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/lib)
 file(GLOB INCLUDE_DIRS "include/*")
+list(APPEND INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+message("包含目录：" "${INCLUDE_DIRS}")
 include_directories(${INCLUDE_DIRS})
 
 

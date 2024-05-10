@@ -42,6 +42,7 @@
 #include<arpa/inet.h>
 #include<iostream>
 #include<memory>
+//#include<array>
 /****************************************************************************/
 #include "ecrt.h"
 #include"pid_controller.h"
@@ -90,12 +91,11 @@ static unsigned int user_alarms = 0;
 // #define TI_AM3359ICE 0x00000009, 0x26483052
 
 // // offsets for PDO entries
-static unsigned int off_bytes_0x6000;
-static unsigned int off_bits_0x6000;
+static unsigned int off_bytes_0x6000[2]={-1};
+static unsigned int off_bits_0x6000[2]={-1};
 
-static unsigned int off_bytes_0x7011;
-static unsigned int off_bits_0x7011;
-
+static unsigned int off_bytes_0x6000_1[2]={-1};
+static unsigned int off_bits_0x6000_1[2]={-1};
 
 static unsigned int counter = 0;
 
@@ -107,113 +107,11 @@ static uint8_t *domain_pd = NULL;
 
 #define BusCouplerPos2 0, 1
 
-#define TI_AM3359ICE 0x00000b95, 0x00020310
-
-#define Valve 0x00000b95, 0x00020130
-
-// offsets for PDO entries
-// static unsigned int off_bytes_cm_1[2]={-1};
-// static unsigned int off_bits_cm_1[2]={-1};
-// static unsigned int off_bytes_cm_2[2]={-1};
-// static unsigned int off_bits_cm_2[2]={-1};
-// static unsigned int off_bytes_target_angle[2]={-1};
-// static unsigned int off_bits_target_angle[2]={-1};
-// static unsigned int off_bytes_ssi[2]={-1};
-// static unsigned int off_bits_ssi[2]={-1};
-// static unsigned int off_bytes_ain_1[2]={-1};
-// static unsigned int off_bits_ain_1[2]={-1};
-// static unsigned int off_bytes_ain_2[2]={-1};
-// static unsigned int off_bits_ain_2[2]={-1};
-// static unsigned int off_bytes_ain_3[2]={-1};
-// static unsigned int off_bits_ain_3[2]={-1};
-// static unsigned int off_bytes_ain_4[2]={-1};
-// static unsigned int off_bits_ain_4[2]={-1};
-// static unsigned int off_bytes_ain_5[2]={-1};
-// static unsigned int off_bits_ain_5[2]={-1};
-// static unsigned int off_bytes_ain_6[2]={-1};
-// static unsigned int off_bits_ain_6[2]={-1};
-// static unsigned int off_bytes_ain_7[2]={-1};
-// static unsigned int off_bits_ain_7[2]={-1};
-// static unsigned int off_bytes_ain_8[2]={-1};
-// static unsigned int off_bits_ain_8[2]={-1};
-
-// static unsigned int counter = 0;
-// static unsigned int blink = 0x00;
-
-/* Master 0, Slave 0, "SSC-Device"
- * Vendor ID:       0x00000009
- * Product code:    0x26483052
- * Revision number: 0x00020111
- */
-
-ec_pdo_entry_info_t slave_0_pdo_entries[] = {
-    {0x7020, 0x01, 8}, /* Commond1 */
-    {0x7020, 0x02, 8}, /* Commond2 */
-    {0x7030, 0x01, 32}, /* Target Angle */
-    {0x6000, 0x01, 32}, /* ssi */
-    {0x6010, 0x01, 16}, /* ain1 */
-    {0x6010, 0x02, 16}, /* ain2 */
-    {0x6010, 0x03, 16}, /* ain3 */
-    {0x6010, 0x04, 16}, /* ain4 */
-    {0x6010, 0x05, 16}, /* ain5 */
-    {0x6010, 0x06, 16}, /* ain6 */
-    {0x6010, 0x07, 16}, /* ain7 */
-    {0x6010, 0x08, 16}, /* ain8 */
-};
-
-ec_pdo_info_t slave_0_pdos[] = {
-    {0x1601, 2, slave_0_pdo_entries + 0}, /* write commond of moulde */
-    {0x1602, 1, slave_0_pdo_entries + 2}, /* write target of moulde */
-    {0x1a00, 1, slave_0_pdo_entries + 3}, /* read ssi of moudle */
-    {0x1a05, 8, slave_0_pdo_entries + 4}, /* read ain of moudle */
-};
-
-ec_sync_info_t slave_0_syncs[] = {
-    {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
-    {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
-    {2, EC_DIR_OUTPUT, 2, slave_0_pdos + 0, EC_WD_ENABLE},
-    {3, EC_DIR_INPUT, 2, slave_0_pdos + 2, EC_WD_DISABLE},
-    {0xff}
-};
+#define TI_AM3359ICE 0x01222222, 0x00020310
 
 
-/* Master 0, Slave 0
- * Vendor ID:       0x00000001
- * Product code:    0x26483052
- * Revision number: 0x00020111
- */
 
-
-ec_pdo_entry_info_t slave_1_pdo_entries[] = {
-    {0x7010, 0x01, 16},
-    {0x7010, 0x02, 16},
-    {0x7010, 0x03, 16},
-    {0x7010, 0x04, 16},
-    {0x7010, 0x05, 16},
-    {0x7010, 0x06, 16},
-    {0x0000, 0x00, 6}, /* Gap */
-    {0x7011, 0x01, 16},
-    {0x7011, 0x02, 16},
-    {0x7011, 0x03, 16},
-    {0x7011, 0x04, 16},
-    {0x7011, 0x05, 16},
-    {0x7011, 0x06, 16},
-    {0x0000, 0x00, 6}, /* Gap */
-};
-
-ec_pdo_info_t slave_1_pdos[] = {
-    {0x1601, 7, slave_1_pdo_entries + 0},
-    {0x1602, 7, slave_1_pdo_entries + 7},
-};
-
-ec_sync_info_t slave_1_syncs[] = {
-    {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
-    {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
-    {2, EC_DIR_OUTPUT, 2, slave_1_pdos + 0, EC_WD_ENABLE},
-    {3, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
-    {0xff}
-};
-
+#include "cstruct.h"
 
 
 
@@ -314,39 +212,45 @@ void cyclic_task()
     { // do this at 1 Hz
 
       
-        unsigned long ssi;
+        unsigned long ssi[4];
+       // std::vector<unsigned long> ssi;
         uint16_t output1=0;
-        ssi=EC_READ_U32(domain_pd + off_bytes_0x6000);
+        ssi[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);
+        ssi[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
+        ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
+        ssi[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
        // float *trdata;
         float *Tr_data;
         Tr_data=(float *)&ssi;
+        for(int i=0;i<4;i++)
+        {
+            Tr_data=(float *)&ssi[i];
+            std::cout<<"角度"<<i<<'\n'<<*Tr_data<<'\n'; 
+        }
 
-        PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
-        PIDInputSet(pid_ptr,*Tr_data);
-        PIDCompute(pid_ptr);
-        float output=pid_ptr->output;
+    //     PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
+    //     PIDInputSet(pid_ptr,*Tr_data);
+    //     PIDCompute(pid_ptr);
+    //     float output=pid_ptr->output;
 
-        printf("SSI: value2=%f\n",*Tr_data);
-        counter = 2;
+    //     printf("SSI: value2=%f\n",*Tr_data);
+    //     counter = 2;
 
-        printf("PID OUTPUT:%f\n",output);
+    //     printf("PID OUTPUT:%f\n",output);
 
-       // output=-2;
-        output1=(uint16_t)((output+10)/20*65536);
+    //    // output=-2;
+    //     output1=(uint16_t)((output+10)/20*65536);
 
-         printf("PID OUTPUT:%x\n",output1);
+    //      printf("PID OUTPUT:%x\n",output1);
 
-        EC_WRITE_U16(domain_pd + off_bytes_0x7011, output1);
-        printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011));
+    //     std::cout<<"Keyboard Value\n"<<cmdptr->uservalue.direction<<'\n';
+    //     std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
 
-        std::cout<<"Keyboard Value\n"<<cmdptr->uservalue.direction<<'\n';
-        std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
+    //     std::cout<<"---------------"<<std::endl;
 
-        std::cout<<"---------------"<<std::endl;
-
-        logger.rj2=*Tr_data;
-        logger.rj2des=cmdptr->uservalue.direction;
-        logger.Savedata();
+    //     logger.rj2=*Tr_data;
+    //     logger.rj2des=cmdptr->uservalue.direction;
+    //     logger.Savedata();
     }
 
 
@@ -422,7 +326,7 @@ int main(int argc, char **argv)
         return -1;
     }
     if (!(sc2 = ecrt_master_slave_config(
-              master, BusCouplerPos2, Valve)))
+              master, BusCouplerPos2,TI_AM3359ICE)))
     {
         fprintf(stderr, "Failed to get slave configuration.\n");
         return -1;
@@ -446,21 +350,39 @@ int main(int argc, char **argv)
         return -1;
     }
  
-    off_bytes_0x6000 = ecrt_slave_config_reg_pdo_entry(sc1, 0x6000, 1, domain, &off_bits_0x6000);
-    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000, off_bits_0x6000);
-    if (off_bytes_0x6000 < 0)
+    off_bytes_0x6000[0] = ecrt_slave_config_reg_pdo_entry(sc1, 0x6000, 1, domain, &off_bits_0x6000[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000[0], off_bits_0x6000[0]);
+    if (off_bytes_0x6000[0] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
     }
 
-    off_bytes_0x7011 = ecrt_slave_config_reg_pdo_entry(sc2, 0x7011, 1, domain, &off_bits_0x7011);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011, off_bits_0x7011);
-    if (off_bytes_0x7011 < 0)
+    off_bytes_0x6000[1] = ecrt_slave_config_reg_pdo_entry(sc1, 0x6000, 2, domain, &off_bits_0x6000[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000[1], off_bits_0x6000[1]);
+    if (off_bytes_0x6000[1] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
     }
+
+ 
+    off_bytes_0x6000_1[0] = ecrt_slave_config_reg_pdo_entry(sc2, 0x6000, 1, domain, &off_bits_0x6000_1[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_1[0], off_bits_0x6000_1[0]);
+    if (off_bytes_0x6000_1[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_1[1] = ecrt_slave_config_reg_pdo_entry(sc2, 0x6000, 2, domain, &off_bits_0x6000_1[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_1[1], off_bits_0x6000_1[1]);
+    if (off_bytes_0x6000_1[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+   
    
 
 #endif
@@ -511,7 +433,7 @@ int main(int argc, char **argv)
             user_alarms++;
         }
        // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
-      //  std::cout<<"-------------------\n";
+        std::cout<<"-------------------\n";
     }
     free(pid_ptr);
     delete cmdptr;
