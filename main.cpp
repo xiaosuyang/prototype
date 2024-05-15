@@ -48,6 +48,8 @@
 #include"pid_controller.h"
 #include "interface/cmdpanel.h"
 #include "datalogger.h"
+#include "Eigen/Dense"
+#include "biped.h"
 /****************************************************************************/
 
 // Application parameters
@@ -222,7 +224,7 @@ void check_slave3_config_states(void)
     sc3_ana_in_state = s;
 }
 
-void cyclic_task()
+void cyclic_task(Biped &bipins,float time)
 {
     // receive process data
     ecrt_master_receive(master);
@@ -231,10 +233,20 @@ void cyclic_task()
     // check process data state (optional)
     check_domain_state();
 
+ 
+    double LEGlength=bipins.calfLinkLength+bipins.thighLinkLength;
+    Vec6<double> RjQ;
+    Vec3<double> P;
+    P.setZero();
+    P(2)=-1*LEGlength-0.2*LEGlength*(cos(0.5*M_PI*time)+1);
+    bipins.ComputeIK(RjQ,P);
+    
+
+
     float RJDES [3];
-    RJDES[0]=0;
-    RJDES[1]=0;
-    RJDES[2]=-20;
+    RJDES[0]=RjQ[2];
+    RJDES[1]=RjQ[3];
+    RJDES[2]=RjQ[4];
 
     if (counter)
     {
@@ -259,6 +271,8 @@ void cyclic_task()
            
             Tr_data[i]=(float *)&ssi[i];
             std::cout<<"角度"<<i<<'\n'<<*Tr_data[i]<<'\n'; 
+            std::cout<<"期望角度"<<i<<'\n'<<RJDES[i]<<'\n'<<'\n';
+
             PIDSetpointSet(&PID_ptr_M[i],RJDES[i]);
             PIDInputSet(&PID_ptr_M[i],*Tr_data[i]);
             PIDCompute(&PID_ptr_M[i]);
@@ -266,7 +280,7 @@ void cyclic_task()
             
             if(i==1) output*=-1;
             if(i==2) output*=-1;
-            std::cout<<"PID OUTPUT:  "<<output<<'\n';
+            std::cout<<"PID OUTPUT:  "<<output<<std::endl;
             output1=(uint16_t)((output+10)/20*65536);
             printf("valve OUTPUT:%x\n",output1);
             EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
@@ -504,22 +518,30 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to start timer: %s\n", strerror(errno));
         return 1;
     }
+    
 
-    float sampletime=0.02;
+    const float controltime=0.02,sampletime=0.01;
    // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
    // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     PID_ptr_M=new PIDControl[3];
-    PIDInit(&PID_ptr_M[0],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[1],0.07,0,0.0035,sampletime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[2],Kp,0,Kd,sampletime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[0],0.04,0,0.003,controltime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[1],0.07,0,0.0035,controltime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[2],Kp,0,Kd,controltime,-10,10,AUTOMATIC,DIRECT);
 
     printf("Started.\n");
+
+    Biped bipedinstance;
+    float time=0;
+
     while (1)
     {
         pause();
         while (sig_alarms != user_alarms)
         {
-            cyclic_task();
+            if(cmdptr->uservalue.Starttime) time+=sampletime;
+            else time=0;
+           
+            cyclic_task(bipedinstance,time);
             user_alarms++;
             
         }

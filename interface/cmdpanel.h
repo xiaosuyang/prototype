@@ -15,6 +15,7 @@
 struct UserValue
 {
     float direction=0;
+    bool Starttime=false;
 };
 
 class CmdPanel{

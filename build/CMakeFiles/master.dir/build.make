@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/dhy/桌面/prototype1.1
+CMAKE_SOURCE_DIR = /home/xsy/Desktop/prototype/master4
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dhy/桌面/prototype1.1/build
+CMAKE_BINARY_DIR = /home/xsy/Desktop/prototype/master4/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/master.dir/depend.make
@@ -57,47 +57,61 @@ include CMakeFiles/master.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/master.dir/flags.make
 
+CMakeFiles/master.dir/BIPED/biped.cpp.o: CMakeFiles/master.dir/flags.make
+CMakeFiles/master.dir/BIPED/biped.cpp.o: ../BIPED/biped.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xsy/Desktop/prototype/master4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/master.dir/BIPED/biped.cpp.o"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/BIPED/biped.cpp.o -c /home/xsy/Desktop/prototype/master4/BIPED/biped.cpp
+
+CMakeFiles/master.dir/BIPED/biped.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/master.dir/BIPED/biped.cpp.i"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xsy/Desktop/prototype/master4/BIPED/biped.cpp > CMakeFiles/master.dir/BIPED/biped.cpp.i
+
+CMakeFiles/master.dir/BIPED/biped.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/master.dir/BIPED/biped.cpp.s"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xsy/Desktop/prototype/master4/BIPED/biped.cpp -o CMakeFiles/master.dir/BIPED/biped.cpp.s
+
 CMakeFiles/master.dir/control/pid_controller.cpp.o: CMakeFiles/master.dir/flags.make
 CMakeFiles/master.dir/control/pid_controller.cpp.o: ../control/pid_controller.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dhy/桌面/prototype1.1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/master.dir/control/pid_controller.cpp.o"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/control/pid_controller.cpp.o -c /home/dhy/桌面/prototype1.1/control/pid_controller.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xsy/Desktop/prototype/master4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/master.dir/control/pid_controller.cpp.o"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/control/pid_controller.cpp.o -c /home/xsy/Desktop/prototype/master4/control/pid_controller.cpp
 
 CMakeFiles/master.dir/control/pid_controller.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/master.dir/control/pid_controller.cpp.i"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dhy/桌面/prototype1.1/control/pid_controller.cpp > CMakeFiles/master.dir/control/pid_controller.cpp.i
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xsy/Desktop/prototype/master4/control/pid_controller.cpp > CMakeFiles/master.dir/control/pid_controller.cpp.i
 
 CMakeFiles/master.dir/control/pid_controller.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/master.dir/control/pid_controller.cpp.s"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dhy/桌面/prototype1.1/control/pid_controller.cpp -o CMakeFiles/master.dir/control/pid_controller.cpp.s
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xsy/Desktop/prototype/master4/control/pid_controller.cpp -o CMakeFiles/master.dir/control/pid_controller.cpp.s
 
 CMakeFiles/master.dir/interface/cmdpanel.cpp.o: CMakeFiles/master.dir/flags.make
 CMakeFiles/master.dir/interface/cmdpanel.cpp.o: ../interface/cmdpanel.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dhy/桌面/prototype1.1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/master.dir/interface/cmdpanel.cpp.o"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/interface/cmdpanel.cpp.o -c /home/dhy/桌面/prototype1.1/interface/cmdpanel.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xsy/Desktop/prototype/master4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/master.dir/interface/cmdpanel.cpp.o"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/interface/cmdpanel.cpp.o -c /home/xsy/Desktop/prototype/master4/interface/cmdpanel.cpp
 
 CMakeFiles/master.dir/interface/cmdpanel.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/master.dir/interface/cmdpanel.cpp.i"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dhy/桌面/prototype1.1/interface/cmdpanel.cpp > CMakeFiles/master.dir/interface/cmdpanel.cpp.i
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xsy/Desktop/prototype/master4/interface/cmdpanel.cpp > CMakeFiles/master.dir/interface/cmdpanel.cpp.i
 
 CMakeFiles/master.dir/interface/cmdpanel.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/master.dir/interface/cmdpanel.cpp.s"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dhy/桌面/prototype1.1/interface/cmdpanel.cpp -o CMakeFiles/master.dir/interface/cmdpanel.cpp.s
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xsy/Desktop/prototype/master4/interface/cmdpanel.cpp -o CMakeFiles/master.dir/interface/cmdpanel.cpp.s
 
 CMakeFiles/master.dir/main.cpp.o: CMakeFiles/master.dir/flags.make
 CMakeFiles/master.dir/main.cpp.o: ../main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dhy/桌面/prototype1.1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/master.dir/main.cpp.o"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/main.cpp.o -c /home/dhy/桌面/prototype1.1/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xsy/Desktop/prototype/master4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/master.dir/main.cpp.o"
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/master.dir/main.cpp.o -c /home/xsy/Desktop/prototype/master4/main.cpp
 
 CMakeFiles/master.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/master.dir/main.cpp.i"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dhy/桌面/prototype1.1/main.cpp > CMakeFiles/master.dir/main.cpp.i
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xsy/Desktop/prototype/master4/main.cpp > CMakeFiles/master.dir/main.cpp.i
 
 CMakeFiles/master.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/master.dir/main.cpp.s"
-	/home/dhy/桌面/prototype1.1/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dhy/桌面/prototype1.1/main.cpp -o CMakeFiles/master.dir/main.cpp.s
+	/home/xsy/Desktop/prototype/master4/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xsy/Desktop/prototype/master4/main.cpp -o CMakeFiles/master.dir/main.cpp.s
 
 # Object files for target master
 master_OBJECTS = \
+"CMakeFiles/master.dir/BIPED/biped.cpp.o" \
 "CMakeFiles/master.dir/control/pid_controller.cpp.o" \
 "CMakeFiles/master.dir/interface/cmdpanel.cpp.o" \
 "CMakeFiles/master.dir/main.cpp.o"
@@ -105,13 +119,14 @@ master_OBJECTS = \
 # External object files for target master
 master_EXTERNAL_OBJECTS =
 
+master: CMakeFiles/master.dir/BIPED/biped.cpp.o
 master: CMakeFiles/master.dir/control/pid_controller.cpp.o
 master: CMakeFiles/master.dir/interface/cmdpanel.cpp.o
 master: CMakeFiles/master.dir/main.cpp.o
 master: CMakeFiles/master.dir/build.make
 master: ../output/lib/libethercat.so
 master: CMakeFiles/master.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dhy/桌面/prototype1.1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable master"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/xsy/Desktop/prototype/master4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable master"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/master.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -124,6 +139,6 @@ CMakeFiles/master.dir/clean:
 .PHONY : CMakeFiles/master.dir/clean
 
 CMakeFiles/master.dir/depend:
-	cd /home/dhy/桌面/prototype1.1/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dhy/桌面/prototype1.1 /home/dhy/桌面/prototype1.1 /home/dhy/桌面/prototype1.1/build /home/dhy/桌面/prototype1.1/build /home/dhy/桌面/prototype1.1/build/CMakeFiles/master.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/xsy/Desktop/prototype/master4/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/xsy/Desktop/prototype/master4 /home/xsy/Desktop/prototype/master4 /home/xsy/Desktop/prototype/master4/build /home/xsy/Desktop/prototype/master4/build /home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/master.dir/depend
 

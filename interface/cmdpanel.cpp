@@ -60,6 +60,9 @@ void KeyBoard::changeValue(){
     case 's':case 'S':
         uservalue.direction-=sensitivityUp;
         break;
+    case 't':case 'T':
+         uservalue.Starttime=true;
+        break;
     default:
         break;
     }

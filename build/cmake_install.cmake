@@ -1,4 +1,4 @@
-# Install script for directory: /home/dhy/桌面/prototype1.1
+# Install script for directory: /home/xsy/Desktop/prototype/master4
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/dhy/桌面/prototype1.1/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/xsy/Desktop/prototype/master4/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

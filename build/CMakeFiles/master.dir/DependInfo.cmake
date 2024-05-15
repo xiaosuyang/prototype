@@ -4,9 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/dhy/桌面/prototype1.1/control/pid_controller.cpp" "/home/dhy/桌面/prototype1.1/build/CMakeFiles/master.dir/control/pid_controller.cpp.o"
-  "/home/dhy/桌面/prototype1.1/interface/cmdpanel.cpp" "/home/dhy/桌面/prototype1.1/build/CMakeFiles/master.dir/interface/cmdpanel.cpp.o"
-  "/home/dhy/桌面/prototype1.1/main.cpp" "/home/dhy/桌面/prototype1.1/build/CMakeFiles/master.dir/main.cpp.o"
+  "/home/xsy/Desktop/prototype/master4/BIPED/biped.cpp" "/home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir/BIPED/biped.cpp.o"
+  "/home/xsy/Desktop/prototype/master4/control/pid_controller.cpp" "/home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir/control/pid_controller.cpp.o"
+  "/home/xsy/Desktop/prototype/master4/interface/cmdpanel.cpp" "/home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir/interface/cmdpanel.cpp.o"
+  "/home/xsy/Desktop/prototype/master4/main.cpp" "/home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -14,10 +15,14 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../output/include"
   "../output/lib"
+  "../include/biped.h"
   "../include/control"
+  "../include/cppTypes.h"
   "../include/cstruct.h"
   "../include/logdata"
+  "../include/math"
   "../include"
+  "/usr/include/eigen3"
   )
 
 # Targets to which this target links.

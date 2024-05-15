@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/dhy/桌面/prototype1.1
+CMAKE_SOURCE_DIR = /home/xsy/Desktop/prototype/master4
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dhy/桌面/prototype1.1/build
+CMAKE_BINARY_DIR = /home/xsy/Desktop/prototype/master4/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dhy/桌面/prototype1.1/build/CMakeFiles /home/dhy/桌面/prototype1.1/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/xsy/Desktop/prototype/master4/build/CMakeFiles /home/xsy/Desktop/prototype/master4/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dhy/桌面/prototype1.1/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/xsy/Desktop/prototype/master4/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -122,6 +122,33 @@ master: cmake_check_build_system
 master/fast:
 	$(MAKE) -f CMakeFiles/master.dir/build.make CMakeFiles/master.dir/build
 .PHONY : master/fast
+
+BIPED/biped.o: BIPED/biped.cpp.o
+
+.PHONY : BIPED/biped.o
+
+# target to build an object file
+BIPED/biped.cpp.o:
+	$(MAKE) -f CMakeFiles/master.dir/build.make CMakeFiles/master.dir/BIPED/biped.cpp.o
+.PHONY : BIPED/biped.cpp.o
+
+BIPED/biped.i: BIPED/biped.cpp.i
+
+.PHONY : BIPED/biped.i
+
+# target to preprocess a source file
+BIPED/biped.cpp.i:
+	$(MAKE) -f CMakeFiles/master.dir/build.make CMakeFiles/master.dir/BIPED/biped.cpp.i
+.PHONY : BIPED/biped.cpp.i
+
+BIPED/biped.s: BIPED/biped.cpp.s
+
+.PHONY : BIPED/biped.s
+
+# target to generate assembly for a file
+BIPED/biped.cpp.s:
+	$(MAKE) -f CMakeFiles/master.dir/build.make CMakeFiles/master.dir/BIPED/biped.cpp.s
+.PHONY : BIPED/biped.cpp.s
 
 control/pid_controller.o: control/pid_controller.cpp.o
 
@@ -213,6 +240,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... master"
+	@echo "... BIPED/biped.o"
+	@echo "... BIPED/biped.i"
+	@echo "... BIPED/biped.s"
 	@echo "... control/pid_controller.o"
 	@echo "... control/pid_controller.i"
 	@echo "... control/pid_controller.s"

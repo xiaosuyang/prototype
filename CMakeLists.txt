@@ -20,14 +20,19 @@ set(CMAKE_C_COMPILER "${CROSS_CHAIN_PATH}/bin/arm-linux-gnueabihf-gcc")
 # 指定C++编译器
 set(CMAKE_CXX_COMPILER "${CROSS_CHAIN_PATH}/bin/arm-linux-gnueabihf-g++")
 
+set(CMAKE_CXX_STANDARD 14)
 
 
+find_package(Eigen3 REQUIRED)
+message("Eigen 库目录" " ${EIGEN3_INCLUDE_DIR}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/lib)
 file(GLOB INCLUDE_DIRS "include/*")
 list(APPEND INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 message("包含目录：" "${INCLUDE_DIRS}")
-include_directories(${INCLUDE_DIRS})
+include_directories(${INCLUDE_DIRS}
+"${EIGEN3_INCLUDE_DIR}")
+
 
 
 file(GLOB_RECURSE SRC_FILE "*.cpp")
