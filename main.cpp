@@ -76,6 +76,9 @@ static ec_slave_config_state_t sc1_ana_in_state = {};
 static ec_slave_config_t *sc2;
 static ec_slave_config_state_t sc2_ana_in_state = {};
 
+static ec_slave_config_t *sc3;
+static ec_slave_config_state_t sc3_ana_in_state = {};
+
 static CmdPanel * cmdptr=NULL;
 // Timer
 static unsigned int sig_alarms = 0;
@@ -97,6 +100,9 @@ static unsigned int off_bits_0x6000[2]={-1};
 static unsigned int off_bytes_0x6000_1[2]={-1};
 static unsigned int off_bits_0x6000_1[2]={-1};
 
+static unsigned int off_bytes_0x7011[3]={-1};
+static unsigned int off_bits_0x7011[3]={-1};
+
 static unsigned int counter = 0;
 
 static unsigned int blink = 0x00;
@@ -105,10 +111,12 @@ static uint8_t *domain_pd = NULL;
 
 #define BusCouplerPos1 0, 0
 
-#define BusCouplerPos2 0, 1
+#define BusCouplerPos2 0, 2
+
+#define BusCouplerPos3 0, 1
 
 #define TI_AM3359ICE 0x01222222, 0x00020310
-
+#define Valve 0x00000b95, 0x00020130
 
 
 #include "cstruct.h"
@@ -195,6 +203,25 @@ void check_slave2_config_states(void)
     sc2_ana_in_state = s;
 }
 
+void check_slave3_config_states(void)
+{
+    // printf("check_slave_config_states\n");
+    ec_slave_config_state_t s;
+
+    ecrt_slave_config_state(sc3, &s);
+
+    if (s.al_state != sc3_ana_in_state.al_state)
+        printf("AnaIn3: State 0x%02X.\n", s.al_state);
+
+    if (s.online != sc3_ana_in_state.online)
+        printf("AnaIn3: %s.\n", s.online ? "online" : "offline");
+    if (s.operational != sc3_ana_in_state.operational)
+        printf("AnaIn3: %soperational.\n",
+               s.operational ? "" : "Not ");
+
+    sc3_ana_in_state = s;
+}
+
 void cyclic_task()
 {
     // receive process data
@@ -203,6 +230,11 @@ void cyclic_task()
 
     // check process data state (optional)
     check_domain_state();
+
+    float RJDES [3];
+    RJDES[0]=0;
+    RJDES[1]=0;
+    RJDES[2]=-20;
 
     if (counter)
     {
@@ -217,28 +249,38 @@ void cyclic_task()
         uint16_t output1=0;
         ssi[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);//RJ2
         ssi[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);//RJ3
-        ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);//RJ4
+       ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);//RJ4
         ssi[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
        // float *trdata;
-        float *Tr_data;
-        Tr_data=(float *)&ssi;
+        float *Tr_data[4];
+        //Tr_data=(float *)&ssi;
         for(int i=0;i<3;i++)
-        {
-            std::cout<<"角度"<<i<<'\n'<<*Tr_data<<'\n'; 
-            Tr_data=(float *)&ssi[i];
-            PIDSetpointSet(&PID_ptr_M[i],0);
-            PIDInputSet(&PID_ptr_M[i],*Tr_data);
+        { 
+           
+            Tr_data[i]=(float *)&ssi[i];
+            std::cout<<"角度"<<i<<'\n'<<*Tr_data[i]<<'\n'; 
+            PIDSetpointSet(&PID_ptr_M[i],RJDES[i]);
+            PIDInputSet(&PID_ptr_M[i],*Tr_data[i]);
             PIDCompute(&PID_ptr_M[i]);
             float output=PID_ptr_M[i].output;
+            
+            if(i==1) output*=-1;
+            if(i==2) output*=-1;
+            std::cout<<"PID OUTPUT:  "<<output<<'\n';
             output1=(uint16_t)((output+10)/20*65536);
+            printf("valve OUTPUT:%x\n",output1);
+            EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
+            printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i]));
         }
+
+
     //     PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
     //     PIDInputSet(pid_ptr,*Tr_data);
     //     PIDCompute(pid_ptr);
     //     float output=pid_ptr->output;
 
     //     printf("SSI: value2=%f\n",*Tr_data);
-    //     counter = 2;
+         counter = 2;
 
     //     printf("PID OUTPUT:%f\n",output);
 
@@ -251,8 +293,14 @@ void cyclic_task()
     //     std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
 
     //     std::cout<<"---------------"<<std::endl;
-        logger.rj2=*Tr_data;
-        logger.rj2des=cmdptr->uservalue.direction;
+        logger.rj2=*Tr_data[0];
+        logger.rj2des=RJDES[0];
+        logger.rj3=*Tr_data[1];
+        logger.rj3des=RJDES[1];
+        logger.rj4=*Tr_data[2];
+        logger.rj4des=RJDES[2];
+        std::cout<<"-------------------\n";
+
         logger.Savedata();
     }
 
@@ -315,7 +363,7 @@ int main(int argc, char **argv)
     master = ecrt_request_master(0);
     if (!master)
         return -1;
-    // 建立一个域，参数是master
+    // 建立一个域，参数是masters
     domain = ecrt_master_create_domain(master);
     if (!domain)
         return -1;
@@ -334,7 +382,12 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to get slave configuration.\n");
         return -1;
     }
-
+    if (!(sc3 = ecrt_master_slave_config(
+              master, BusCouplerPos3, Valve)))
+    {
+        fprintf(stderr, "Failed to get slave configuration.\n");
+        return -1;
+    }
 
 
     // 设置PDOS，利⽤sc、EC_END、对⻬信息
@@ -347,12 +400,19 @@ int main(int argc, char **argv)
 
 
     printf("Configuring PDOs...\n");
-    if (ecrt_slave_config_pdos(sc2, EC_END, slave_1_syncs))
+    if (ecrt_slave_config_pdos(sc2, EC_END, slave_2_syncs))
     {
         fprintf(stderr, "Failed to configure PDOs.\n");
         return -1;
     }
  
+    printf("Configuring PDOs...\n");
+    if (ecrt_slave_config_pdos(sc3, EC_END, slave_1_syncs))
+    {
+        fprintf(stderr, "Failed to configure PDOs.\n");
+        return -1;
+    }
+
     off_bytes_0x6000[0] = ecrt_slave_config_reg_pdo_entry(sc1, 0x6000, 1, domain, &off_bits_0x6000[0]);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000[0], off_bits_0x6000[0]);
     if (off_bytes_0x6000[0] < 0)
@@ -386,7 +446,29 @@ int main(int argc, char **argv)
         return -1;
     }
    
-   
+    off_bytes_0x7011[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 1, domain, &off_bits_0x7011[0]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[0], off_bits_0x7011[0]);
+    if (off_bytes_0x7011[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7011[1] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 2, domain, &off_bits_0x7011[1]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[1], off_bits_0x7011[1]);
+    if (off_bytes_0x7011[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7011[2] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 3, domain, &off_bits_0x7011[2]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[2], off_bits_0x7011[2]);
+    if (off_bytes_0x7011[2] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
 
 #endif
 
@@ -428,8 +510,8 @@ int main(int argc, char **argv)
    // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     PID_ptr_M=new PIDControl[3];
     PIDInit(&PID_ptr_M[0],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[1],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[2],0.04,0,0.003,sampletime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[1],0.07,0,0.0035,sampletime,-10,10,AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[2],Kp,0,Kd,sampletime,-10,10,AUTOMATIC,DIRECT);
 
     printf("Started.\n");
     while (1)
@@ -439,9 +521,10 @@ int main(int argc, char **argv)
         {
             cyclic_task();
             user_alarms++;
+            
         }
        // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
-        std::cout<<"-------------------\n";
+        
     }
   
     delete [] PID_ptr_M;

@@ -21,8 +21,12 @@ public:
    
         if (openFile(filepath))
         {
-            file << rj2 << '  ';
-            file << rj2des << '\n';
+            file << rj2 << '\t'<<'\t';
+            file << rj2des <<'\t'<<'\t';
+            file << rj3 << '\t'<<'\t';
+            file << rj3des << '\t'<<'\t';
+            file << rj4 << '\t'<<'\t';
+            file << rj4des << std::endl;
             file.close();
         }
         
@@ -35,7 +39,7 @@ public:
         }
     }
 
-    float rj2=0, rj2des=0;
+    float rj2=0, rj2des=0,rj3=0,rj3des=0,rj4=0,rj4des=0;
 
 private:
     std::ofstream file;
@@ -45,6 +49,7 @@ private:
 
     DataLogger()
     {
+        filepath=std::string("rj2.txt");
         std::ofstream file1;
         wholefile = prefix + filepath;
         file1.open(wholefile.c_str());

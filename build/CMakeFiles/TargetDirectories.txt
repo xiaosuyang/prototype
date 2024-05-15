@@ -1,0 +1,3 @@
+/home/dhy/桌面/prototype1.1/build/CMakeFiles/rebuild_cache.dir
+/home/dhy/桌面/prototype1.1/build/CMakeFiles/edit_cache.dir
+/home/dhy/桌面/prototype1.1/build/CMakeFiles/master.dir
