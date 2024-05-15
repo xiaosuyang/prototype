@@ -1,3 +1,0 @@
-/home/xsy/Desktop/prototype/master4/build/CMakeFiles/rebuild_cache.dir
-/home/xsy/Desktop/prototype/master4/build/CMakeFiles/edit_cache.dir
-/home/xsy/Desktop/prototype/master4/build/CMakeFiles/master.dir
