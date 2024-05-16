@@ -40,6 +40,7 @@ public:
     }
 
     float rj2=0, rj2des=0,rj3=0,rj3des=0,rj4=0,rj4des=0;
+    
 
 private:
     std::ofstream file;

@@ -66,4 +66,13 @@ bool almostEqual(const Eigen::MatrixBase<T>& a, const Eigen::MatrixBase<T>& b,
   return true;
 }
 
+template<typename T>
+float  rad2deg(T rad)
+{
+  return rad/M_PI*180;
+
+}
+
+
+
 #endif  // PROJECT_MATHUTILITIES_H

@@ -35,17 +35,17 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<unistd.h>
-#include<string.h>
-#include<arpa/inet.h>
-#include<iostream>
-#include<memory>
-//#include<array>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <iostream>
+#include <memory>
+// #include<array>
 /****************************************************************************/
 #include "ecrt.h"
-#include"pid_controller.h"
+#include "pid_controller.h"
 #include "interface/cmdpanel.h"
 #include "datalogger.h"
 #include "Eigen/Dense"
@@ -59,9 +59,8 @@
 // Optional features
 #define CONFIGURE_PDOS 1
 
-
 #define BIGNUM 100000000.0
-PIDControl* PID_ptr_M;//矢状面3关节，j2,j3,j4;
+PIDControl *PID_ptr_M; // 矢状面3关节，j2,j3,j4;
 
 /****************************************************************************/
 
@@ -81,7 +80,7 @@ static ec_slave_config_state_t sc2_ana_in_state = {};
 static ec_slave_config_t *sc3;
 static ec_slave_config_state_t sc3_ana_in_state = {};
 
-static CmdPanel * cmdptr=NULL;
+static CmdPanel *cmdptr = NULL;
 // Timer
 static unsigned int sig_alarms = 0;
 static unsigned int user_alarms = 0;
@@ -96,20 +95,19 @@ static unsigned int user_alarms = 0;
 // #define TI_AM3359ICE 0x00000009, 0x26483052
 
 // // offsets for PDO entries
-static unsigned int off_bytes_0x6000[2]={-1};
-static unsigned int off_bits_0x6000[2]={-1};
+static unsigned int off_bytes_0x6000[2] = {-1};
+static unsigned int off_bits_0x6000[2] = {-1};
 
-static unsigned int off_bytes_0x6000_1[2]={-1};
-static unsigned int off_bits_0x6000_1[2]={-1};
+static unsigned int off_bytes_0x6000_1[2] = {-1};
+static unsigned int off_bits_0x6000_1[2] = {-1};
 
-static unsigned int off_bytes_0x7011[3]={-1};
-static unsigned int off_bits_0x7011[3]={-1};
+static unsigned int off_bytes_0x7011[3] = {-1};
+static unsigned int off_bits_0x7011[3] = {-1};
 
 static unsigned int counter = 0;
 
 static unsigned int blink = 0x00;
 static uint8_t *domain_pd = NULL;
-
 
 #define BusCouplerPos1 0, 0
 
@@ -120,15 +118,11 @@ static uint8_t *domain_pd = NULL;
 #define TI_AM3359ICE 0x01222222, 0x00020310
 #define Valve 0x00000b95, 0x00020130
 
-
 #include "cstruct.h"
 
-
-
-
-int fd=-1;
+int fd = -1;
 struct sockaddr_in saddr;
-DataLogger& logger=DataLogger::GET();
+DataLogger &logger = DataLogger::GET();
 
 void check_domain_state(void)
 {
@@ -224,7 +218,7 @@ void check_slave3_config_states(void)
     sc3_ana_in_state = s;
 }
 
-void cyclic_task(Biped &bipins,float time)
+void cyclic_task(Biped &bipins, float time)
 {
     // receive process data
     ecrt_master_receive(master);
@@ -233,21 +227,6 @@ void cyclic_task(Biped &bipins,float time)
     // check process data state (optional)
     check_domain_state();
 
- 
-    double LEGlength=bipins.calfLinkLength+bipins.thighLinkLength;
-    Vec6<double> RjQ;
-    Vec3<double> P;
-    P.setZero();
-    P(2)=-1*LEGlength-0.2*LEGlength*(cos(0.5*M_PI*time)+1);
-    bipins.ComputeIK(RjQ,P);
-    
-
-
-    float RJDES [3];
-    RJDES[0]=RjQ[2];
-    RJDES[1]=RjQ[3];
-    RJDES[2]=RjQ[4];
-
     if (counter)
     {
         counter--;
@@ -255,69 +234,87 @@ void cyclic_task(Biped &bipins,float time)
     else
     { // do this at 1 Hz
 
-      
-        unsigned long ssi[4];
-       // std::vector<unsigned long> ssi;
-        uint16_t output1=0;
-        ssi[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);//RJ2
-        ssi[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);//RJ3
-       ssi[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);//RJ4
-        ssi[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
-       // float *trdata;
-        float *Tr_data[4];
-        //Tr_data=(float *)&ssi;
-        for(int i=0;i<3;i++)
-        { 
-           
-            Tr_data[i]=(float *)&ssi[i];
-            std::cout<<"角度"<<i<<'\n'<<*Tr_data[i]<<'\n'; 
-            std::cout<<"期望角度"<<i<<'\n'<<RJDES[i]<<'\n'<<'\n';
+        double LEGlength = bipins.calfLinkLength + bipins.thighLinkLength + bipins.toeLinkLength;
+        Vec6<double> RjQ;
+        Vec3<double> P;
+        P.setZero();
+        P(2) = -1 * LEGlength - 0.08 * LEGlength * (cos(0.5 * M_PI * time) - 1);
+       // P(2)*=-1;
+        bipins.ComputeIK(RjQ, P);
 
-            PIDSetpointSet(&PID_ptr_M[i],RJDES[i]);
-            PIDInputSet(&PID_ptr_M[i],*Tr_data[i]);
+        std::cout << "坐标\n"
+                  << P << '\n';
+        float RJDES[3];
+        RJDES[0] = rad2deg(RjQ[2]);
+        RJDES[1] = rad2deg(RjQ[3]);
+        RJDES[2] = rad2deg(RjQ[4]);
+
+        unsigned long ssi[4];
+        // std::vector<unsigned long> ssi;
+        uint16_t output1 = 0;
+        ssi[0] = EC_READ_U32(domain_pd + off_bytes_0x6000[0]);   // RJ2
+        ssi[1] = EC_READ_U32(domain_pd + off_bytes_0x6000[1]);   // RJ3
+        ssi[2] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]); // RJ4
+        ssi[3] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
+        // float *trdata;
+        float *Tr_data[4];
+        // Tr_data=(float *)&ssi;
+        for (int i = 0; i < 3; i++)
+        {
+
+            Tr_data[i] = (float *)&ssi[i];
+            std::cout << "角度" << i << '\n'
+                      << *Tr_data[i] << '\n';
+            std::cout << "期望角度" << i << '\n'
+                      << RJDES[i] << '\n'
+                      << '\n';
+
+            PIDSetpointSet(&PID_ptr_M[i], RJDES[i]);
+            PIDInputSet(&PID_ptr_M[i], *Tr_data[i]);
             PIDCompute(&PID_ptr_M[i]);
-            float output=PID_ptr_M[i].output;
-            
-            if(i==1) output*=-1;
-            if(i==2) output*=-1;
-            std::cout<<"PID OUTPUT:  "<<output<<std::endl;
-            output1=(uint16_t)((output+10)/20*65536);
-            printf("valve OUTPUT:%x\n",output1);
+            float output = PID_ptr_M[i].output;
+
+            if (i == 1)
+                output *= -1;
+            if (i == 2)
+                output *= -1;
+            std::cout << "PID OUTPUT:  " << output << std::endl;
+            output1 = (uint16_t)((output + 10) / 20 * 65536);
+            printf("valve OUTPUT:%x\n", output1);
             EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
             printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i]));
         }
 
+        //     PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
+        //     PIDInputSet(pid_ptr,*Tr_data);
+        //     PIDCompute(pid_ptr);
+        //     float output=pid_ptr->output;
 
-    //     PIDSetpointSet(pid_ptr,cmdptr->uservalue.direction);
-    //     PIDInputSet(pid_ptr,*Tr_data);
-    //     PIDCompute(pid_ptr);
-    //     float output=pid_ptr->output;
+        //     printf("SSI: value2=%f\n",*Tr_data);
+        counter = 2;
 
-    //     printf("SSI: value2=%f\n",*Tr_data);
-         counter = 2;
+        //     printf("PID OUTPUT:%f\n",output);
 
-    //     printf("PID OUTPUT:%f\n",output);
+        //    // output=-2;
+        //     output1=(uint16_t)((output+10)/20*65536);
 
-    //    // output=-2;
-    //     output1=(uint16_t)((output+10)/20*65536);
+        //      printf("PID OUTPUT:%x\n",output1);
 
-    //      printf("PID OUTPUT:%x\n",output1);
+        //     std::cout<<"Keyboard Value\n"<<cmdptr->uservalue.direction<<'\n';
+        //     std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
 
-    //     std::cout<<"Keyboard Value\n"<<cmdptr->uservalue.direction<<'\n';
-    //     std::cout<<"Kp Value\n"<<PIDKpGet(pid_ptr)<<'\n';
+        //     std::cout<<"---------------"<<std::endl;
+        logger.rj2 = *Tr_data[0];
+        logger.rj2des = RJDES[0];
+        logger.rj3 = *Tr_data[1];
+        logger.rj3des = RJDES[1];
+        logger.rj4 = *Tr_data[2];
+        logger.rj4des = RJDES[2];
 
-    //     std::cout<<"---------------"<<std::endl;
-        logger.rj2=*Tr_data[0];
-        logger.rj2des=RJDES[0];
-        logger.rj3=*Tr_data[1];
-        logger.rj3des=RJDES[1];
-        logger.rj4=*Tr_data[2];
-        logger.rj4des=RJDES[2];
-        std::cout<<"-------------------\n";
+        std::cout << "-------------------\n";
 
         logger.Savedata();
     }
-
 
     // calculate new process data
     blink++;
@@ -327,9 +324,6 @@ void cyclic_task(Biped &bipins,float time)
 
     // EC_WRITE_U16(domain_pd + off_bytes_led_1, 1 << 2);
     // printf("LED1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_led_1));
-
-
-
 
     //  send process data
     ecrt_domain_queue(domain);
@@ -353,23 +347,21 @@ void signal_handler(int signum)
 
 int main(int argc, char **argv)
 {
-    float Kp=0.01,Kd=0;
+    float Kp = 0.01, Kd = 0;
     if (argc < 2)
         std::cout << "No Kp" << std::endl;
-    else if(argc==2)
-        Kp=atof(argv[1]);
+    else if (argc == 2)
+        Kp = atof(argv[1]);
     else
     {
-        Kp=atof(argv[1]);
-        Kd=atof(argv[2]);
+        Kp = atof(argv[1]);
+        Kd = atof(argv[2]);
     }
-   
-    
-        //Kp = std::atof(argv[1]);
 
-   // std::unique_ptr<CmdPanel> cmd_ptr=std::make_unique<KeyBoard>();
-    cmdptr=new KeyBoard();
+    // Kp = std::atof(argv[1]);
 
+    // std::unique_ptr<CmdPanel> cmd_ptr=std::make_unique<KeyBoard>();
+    cmdptr = new KeyBoard();
 
     struct sigaction sa;
     struct itimerval tv;
@@ -391,7 +383,7 @@ int main(int argc, char **argv)
         return -1;
     }
     if (!(sc2 = ecrt_master_slave_config(
-              master, BusCouplerPos2,TI_AM3359ICE)))
+              master, BusCouplerPos2, TI_AM3359ICE)))
     {
         fprintf(stderr, "Failed to get slave configuration.\n");
         return -1;
@@ -403,7 +395,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
-
     // 设置PDOS，利⽤sc、EC_END、对⻬信息
     printf("Configuring PDOs...\n");
     if (ecrt_slave_config_pdos(sc1, EC_END, slave_0_syncs))
@@ -412,14 +403,13 @@ int main(int argc, char **argv)
         return -1;
     }
 
-
     printf("Configuring PDOs...\n");
     if (ecrt_slave_config_pdos(sc2, EC_END, slave_2_syncs))
     {
         fprintf(stderr, "Failed to configure PDOs.\n");
         return -1;
     }
- 
+
     printf("Configuring PDOs...\n");
     if (ecrt_slave_config_pdos(sc3, EC_END, slave_1_syncs))
     {
@@ -443,7 +433,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
- 
     off_bytes_0x6000_1[0] = ecrt_slave_config_reg_pdo_entry(sc2, 0x6000, 1, domain, &off_bits_0x6000_1[0]);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_1[0], off_bits_0x6000_1[0]);
     if (off_bytes_0x6000_1[0] < 0)
@@ -459,7 +448,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
     }
-   
+
     off_bytes_0x7011[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 1, domain, &off_bits_0x7011[0]);
     printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[0], off_bits_0x7011[0]);
     if (off_bytes_0x7011[0] < 0)
@@ -510,7 +499,7 @@ int main(int argc, char **argv)
 
     printf("Starting timer...\n");
     tv.it_interval.tv_sec = 0;
-    tv.it_interval.tv_usec = 1000000 / FREQUENCY;//10 ms  运行一次signal_handler
+    tv.it_interval.tv_usec = 1000000 / FREQUENCY; // 10 ms  运行一次signal_handler
     tv.it_value.tv_sec = 0;
     tv.it_value.tv_usec = 2000;
     if (setitimer(ITIMER_REAL, &tv, NULL))
@@ -518,38 +507,37 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to start timer: %s\n", strerror(errno));
         return 1;
     }
-    
 
-    const float controltime=0.02,sampletime=0.01;
-   // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
-   // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
-    PID_ptr_M=new PIDControl[3];
-    PIDInit(&PID_ptr_M[0],0.04,0,0.003,controltime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[1],0.07,0,0.0035,controltime,-10,10,AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[2],Kp,0,Kd,controltime,-10,10,AUTOMATIC,DIRECT);
+    const float controltime = 0.02, sampletime = 0.01;
+    // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
+    // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
+    PID_ptr_M = new PIDControl[3];
+    PIDInit(&PID_ptr_M[0], 0.04, 0, 0.003, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[1], 0.07, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[2], 0.03, 0, 0.0015, controltime, -10, 10, AUTOMATIC, DIRECT);
 
     printf("Started.\n");
 
     Biped bipedinstance;
-    float time=0;
+    float time = 0;
 
     while (1)
     {
         pause();
         while (sig_alarms != user_alarms)
         {
-            if(cmdptr->uservalue.Starttime) time+=sampletime;
-            else time=0;
-           
-            cyclic_task(bipedinstance,time);
+            if (cmdptr->uservalue.Starttime)
+                time += sampletime;
+            else
+                time = 0;
+
+            cyclic_task(bipedinstance, time);
             user_alarms++;
-            
         }
-       // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
-        
+        // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
     }
-  
-    delete [] PID_ptr_M;
+
+    delete[] PID_ptr_M;
     delete cmdptr;
     return 0;
 }

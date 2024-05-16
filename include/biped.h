@@ -24,7 +24,7 @@ public:
 
         thighLinkLength = 0.460; //
         calfLinkLength = 0.37;
-        toeLinkLength = 0.123;
+        toeLinkLength = 0.098;
     }
     double toeLinkLength;
     double thighLinkLength;
@@ -49,13 +49,14 @@ public:
     {
         using namespace ori;
         Vec3<double> r_toe;
-        r_toe << 0, 0, toeLinkLength;
+        r_toe << 0, 0, -toeLinkLength;
         Vec3<double> r = p - R * r_toe; // BrB5=BrBE-BR5 * 5r5E
 
         r = R.transpose() * (-r);
 
         double C = r.norm();
         double Clknee = (C * C - pow(thighLinkLength, 2) - pow(calfLinkLength, 2)) / (2 * thighLinkLength * calfLinkLength);
+        std::cout<<"CLknee\n"<<Clknee<<'\n';
         if (Clknee >= 1)
             q(3) = 0;
         else if (Clknee <= -1)
@@ -78,6 +79,7 @@ public:
         q(0) = atan2(-R1(0, 1), R1(1, 1));
         q(1) = atan2(R1(2, 1), -R1(0, 1) * sin(q[0]) + R1(1, 1) * cos(q[0]));
         q(2) = atan2(-R1(2, 0), R1(2, 2));
+      //  std::cout<<"逆运动解\n"<<q<<'\n';
     }
 };
 
