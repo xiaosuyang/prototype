@@ -256,7 +256,12 @@ void cyclic_task(Biped &bipins, float time)
         ssi[1] = EC_READ_U32(domain_pd + off_bytes_0x6000[1]);   // RJ3
         ssi[2] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]); // RJ4
         ssi[3] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
+
+        float *rj2=(float *)&ssi[0];
+        float Ldes=bipins.RJ2convert(RJDES[0]);
+        float Lreal=bipins.RJ2convert(*rj2);
         // float *trdata;
+       
         float *Tr_data[4];
         // Tr_data=(float *)&ssi;
         for (int i = 0; i < 3; i++)
@@ -268,9 +273,18 @@ void cyclic_task(Biped &bipins, float time)
             std::cout << "期望角度" << i << '\n'
                       << RJDES[i] << '\n'
                       << '\n';
-
-            PIDSetpointSet(&PID_ptr_M[i], RJDES[i]);
-            PIDInputSet(&PID_ptr_M[i], *Tr_data[i]);
+                     
+            if(i==0)
+            {
+                PIDSetpointSet(&PID_ptr_M[i], Ldes);
+                PIDInputSet(&PID_ptr_M[i],Lreal);
+            }
+            else
+            {
+                PIDSetpointSet(&PID_ptr_M[i], RJDES[i]);
+                PIDInputSet(&PID_ptr_M[i], *Tr_data[i]);
+            }
+            
             PIDCompute(&PID_ptr_M[i]);
             float output = PID_ptr_M[i].output;
 

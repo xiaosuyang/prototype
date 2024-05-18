@@ -45,6 +45,15 @@ public:
             return 0;
     }
 
+    float RJ2convert(float DEG)
+    {
+        const float DEG0=10,OA=27,AB=50,e=16.5;
+        DEG+=DEG0;
+        float L0=OA*sin(DEG0)-AB*cos(asin((OA*cos(DEG0)-e)/AB));
+        float L=OA*sin(DEG)-AB*cos(asin((OA*cos(DEG)-e)/AB));
+        return L-L0;
+    }
+
     void ComputeIK(Vec6<double> &q, Vec3<double> &p, Mat33<double> R=Mat33<double>::Identity())
     {
         using namespace ori;
