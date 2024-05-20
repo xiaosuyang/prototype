@@ -73,6 +73,15 @@ float  rad2deg(T rad)
 
 }
 
+template<typename T>
+float  deg2rad(T deg)
+{
+  return deg/180*M_PI;
+
+}
+
+
+
 
 
 #endif  // PROJECT_MATHUTILITIES_H

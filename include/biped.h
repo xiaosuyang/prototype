@@ -47,8 +47,11 @@ public:
 
     float RJ2convert(float DEG)
     {
-        const float DEG0=10,OA=27,AB=50,e=16.5;
+        
+        float DEG0=10,OA=27,AB=50,e=16.5;
         DEG+=DEG0;
+        DEG0=deg2rad(DEG0);
+        DEG=deg2rad(DEG);
         float L0=OA*sin(DEG0)-AB*cos(asin((OA*cos(DEG0)-e)/AB));
         float L=OA*sin(DEG)-AB*cos(asin((OA*cos(DEG)-e)/AB));
         return L-L0;
