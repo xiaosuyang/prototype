@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <iomanip>
 
 class DataLogger
 {
@@ -18,21 +19,23 @@ public:
 
     void Savedata()
     {
-   
+
         if (openFile(filepath))
         {
-            file << rj2 << '\t'<<'\t';
-            file << rj2des <<'\t'<<'\t';
-            file << rj3 << '\t'<<'\t';
-            file << rj3des << '\t'<<'\t';
-            file << rj4 << '\t'<<'\t';
-            file << rj4des << '\t'<<'\t';
-            file<<pidoutput[0]<<'\t'<<'\t';
-            file<<pidoutput[1]<<'\t'<<'\t';
-            file<<pidoutput[2]<<std::endl;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2 ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2des; 
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj3 ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj3des ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4 ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4des ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[0] ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[1] ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[2] ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2length ;
+            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2lengthdes << std::endl;
+            
             file.close();
         }
-        
     }
     ~DataLogger()
     {
@@ -42,9 +45,9 @@ public:
         }
     }
 
-    float rj2=0, rj2des=0,rj3=0,rj3des=0,rj4=0,rj4des=0;
-    float pidoutput[3];//rj2,3,4 pid输出
-    
+    float rj2 = 0, rj2des = 0, rj3 = 0, rj3des = 0, rj4 = 0, rj4des = 0;
+    float pidoutput[3]; // rj2,3,4 pid输出
+    float rj2length=0, rj2lengthdes=0;
 
 private:
     std::ofstream file;
@@ -54,11 +57,12 @@ private:
 
     DataLogger()
     {
-        filepath=std::string("rj2.txt");
+        filepath = std::string("rj2.txt");
         std::ofstream file1;
         wholefile = prefix + filepath;
         file1.open(wholefile.c_str());
-        for(int i=0;i<3;i++) pidoutput[i]=0;
+        for (int i = 0; i < 3; i++)
+            pidoutput[i] = 0;
     }
     bool openFile(const std::string &filename)
     {

@@ -240,10 +240,12 @@ void cyclic_task(Biped &bipins, float time)
         float Deg[3];
         P.setZero();
         P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time) - 1);
-        Deg[0]=14*cos(0.2*M_PI*time)-14;
-        Deg[2]=18*cos(0.2*M_PI*time)-18;
-        Deg[1]=-1*(Deg[0]+Deg[2]);
-       // P(2)*=-1;
+        Deg[0] = (14 * cos(0.2 * M_PI * time) - 14);
+      //  Deg[2] = 0;
+       // Deg[1] = 0;
+        Deg[2] = (18 * cos(0.2 * M_PI * time) - 18);
+        Deg[1] = -1 * (Deg[0] + Deg[2]);
+        // P(2)*=-1;
         bipins.ComputeIK(RjQ, P);
 
         std::cout << "坐标\n"
@@ -261,12 +263,12 @@ void cyclic_task(Biped &bipins, float time)
         ssi[2] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]); // RJ4
         ssi[3] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
 
-        float *rj2=(float *)&ssi[0];
-        float Ldes=bipins.RJ2convert(RJDES[0]);
-        float Lreal=bipins.RJ2convert(*rj2);
+        float *rj2 = (float *)&ssi[0];
+        float Ldes = bipins.RJ2convert(RJDES[0]);
+        float Lreal = bipins.RJ2convert(*rj2);
         (*rj2);
         // float *trdata;
-       
+
         float *Tr_data[4];
         // Tr_data=(float *)&ssi;
         for (int i = 0; i < 3; i++)
@@ -278,27 +280,44 @@ void cyclic_task(Biped &bipins, float time)
             std::cout << "期望角度" << i << '\n'
                       << RJDES[i] << '\n'
                       << '\n';
-                     
-            if(i==0)
+
+            if (i == 0)
             {
                 PIDSetpointSet(&PID_ptr_M[i], Ldes);
-                PIDInputSet(&PID_ptr_M[i],Lreal);
+                PIDInputSet(&PID_ptr_M[i], Lreal);
+                logger.rj2length = Lreal;
+                logger.rj2lengthdes = Ldes;
+                std::cout << " 期望伸长量" << Ldes << '\n';
+                std::cout << "实际伸长量" << Lreal << '\n';
             }
             else
             {
                 PIDSetpointSet(&PID_ptr_M[i], RJDES[i]);
                 PIDInputSet(&PID_ptr_M[i], *Tr_data[i]);
             }
-            
-            PIDCompute(&PID_ptr_M[i]);
-            float output = PID_ptr_M[i].output;
 
-            if (i == 1)
+            // if (RJDES[0] > 10)
+            // {
+            //     PID_ptr_M[0].alteredKp += 0.05* (RJDES[0]-10) / 10;
+            // }
+
+            PIDCompute(&PID_ptr_M[i]);
+
+            //  if (RJDES[0] > 10)
+            //  {
+            //     PID_ptr_M[0].alteredKp += 0.05* (RJDES[0]-10) / 10;
+            //  }
+         
+            float output = PID_ptr_M[i].output;
+            output *= -1;
+            if (i == 0)
+            {
                 output *= -1;
-            if (i == 2)
-                output *= -1;
+            }
+            // if(i==0) output=-1;
+
             std::cout << "PID OUTPUT:  " << output << std::endl;
-            logger.pidoutput[i]=output;
+            logger.pidoutput[i] = output;
             output1 = (uint16_t)((output + 10) / 20 * 65536);
             printf("valve OUTPUT:%x\n", output1);
             EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
@@ -330,7 +349,6 @@ void cyclic_task(Biped &bipins, float time)
         logger.rj3des = RJDES[1];
         logger.rj4 = *Tr_data[2];
         logger.rj4des = RJDES[2];
-
 
         std::cout << "-------------------\n";
 
@@ -533,9 +551,13 @@ int main(int argc, char **argv)
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     PID_ptr_M = new PIDControl[3];
-    PIDInit(&PID_ptr_M[0], 0.005, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
-    PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
-    PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[0], Kp, Kd, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+   // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    //PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+
+       PIDInit(&PID_ptr_M[1], 0.05, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[2], 0.03, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+
 
     printf("Started.\n");
 

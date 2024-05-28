@@ -49,6 +49,7 @@ public:
     {
         
         float DEG0=10,OA=27,AB=50,e=16.5;
+       // DEG*=-1;
         DEG+=DEG0;
         DEG0=deg2rad(DEG0);
         DEG=deg2rad(DEG);
