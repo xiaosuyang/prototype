@@ -45,13 +45,13 @@ SOFTWARE.
 #include <type_traits>
 
 #include "MathUtilities.h"
-#include "../cppTypes.h"
+#include "utility/cppTypes.h"
 
 namespace ori {
 
 static constexpr double quaternionDerviativeStabilization = 0.1;
 
-enum  CoordinateAxis { X, Y, Z };
+enum class CoordinateAxis { X, Y, Z };
 
 /*!
  * Convert radians to degrees

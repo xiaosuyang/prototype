@@ -2,7 +2,7 @@
 #define PROJECT_BIPED_H
 
 #include "Eigen/Dense"
-#include "cppTypes.h"
+#include "utility/cppTypes.h"
 #include "math/orientation_tools.h"
 
 class Biped
@@ -57,6 +57,9 @@ public:
         float L=OA*sin(DEG)-AB*cos(asin((OA*cos(DEG)-e)/AB));
         return L-L0;
     }
+
+    std::pair<float,float> RJ0RJ1convert(float DEG_O,float DEG_1);
+
 
     void ComputeIK(Vec6<double> &q, Vec3<double> &p, Mat33<double> R=Mat33<double>::Identity())
     {

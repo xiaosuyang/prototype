@@ -9,6 +9,7 @@
 #define PROJECT_CPPTYPES_H
 
 #include <vector>
+#include "cTypes.h"
 #include <Eigen/Dense>
 
 // Rotation Matrix
@@ -155,8 +156,13 @@ using D6Mat = typename Eigen::Matrix<T, 6, Eigen::Dynamic>;
 template <typename T>
 using D3Mat = typename Eigen::Matrix<T, 3, Eigen::Dynamic>;
 
-// std::vector (a list) of Eigen things
+template<typename T>
+using Isometry3 = typename Eigen::Transform<T, 3, Eigen::Isometry>;
 
-//enum  RobotType { CHEETAH_3, MINI_CHEETAH, WHEEL_LEG };
+// std::vector (a list) of Eigen things
+template <typename T>
+using vectorAligned = typename std::vector<T, Eigen::aligned_allocator<T>>;
+
+enum class RobotType { CHEETAH_3, MINI_CHEETAH, WHEEL_LEG };
 
 #endif  // PROJECT_CPPTYPES_H
