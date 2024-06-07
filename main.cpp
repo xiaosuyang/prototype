@@ -257,30 +257,31 @@ void cyclic_task(Biped &bipins, float time)
         RJDES[3]=0;
 
        // unsigned long ssi[4];
-       std::vector<unsigned long> ssi;
-        // std::vector<unsigned long> ssi;
+        std::vector<unsigned long> ssi;
+        unsigned long SSI[12];
+        for(int i=0;i<12;i++) SSI[i]=0;
+  
         uint16_t output1 = 0;
-        ssi.push_back(EC_READ_U32(domain_pd + off_bytes_0x6000[0])); // RJ2
-        ssi.push_back(EC_READ_U32(domain_pd + off_bytes_0x6000[1]));   // RJ3
-        ssi.push_back(EC_READ_U32(domain_pd + off_bytes_0x6000_1[0])); // RJ0
-        ssi.push_back(EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]));//RJ1
-
-        std::vector<float *> TR_data(ssi.size());
-        int i=0;
-        for(unsigned long& element:ssi)
+        SSI[0]=EC_READ_U32(domain_pd + off_bytes_0x6000[0]);
+        SSI[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
+        SSI[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
+        SSI[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
+        
+        float * TR_data[12];
+        for(int i=0;i<12;i++)
         {
-            TR_data[i++]=(float*)element;
-        } 
+            TR_data[i]=(float *)SSI[i];
+        }
+        
 
-        float *rj2 = (float *)&ssi[0];
         float Ldes = bipins.RJ2convert(RJDES[0]);
-        float Lreal = bipins.RJ2convert(*rj2);
+        float Lreal = bipins.RJ2convert(*TR_data[0]);
+ 
 
-        auto Lj0j1des=bipins.RJ0RJ1convert(RJDES[2],RJDES[3]);
-        auto Lj0j1real=bipins.RJ0RJ1convert(ssi[2],ssi[3]);    
-
-        float gang0des=Lj0j1des.first,gang1des=Lj0j1des.second;
-        float gang0real=Lj0j1real.first,gang1real=Lj0j1real.second;
+        float gang0des,gang1des;
+        float gang0real,gang1real;
+        bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
+        bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
         
 
         PIDSetpointSet(&PID_ptr_M[0], Ldes);//RJ2
@@ -297,7 +298,6 @@ void cyclic_task(Biped &bipins, float time)
         PIDInputSet(&PID_ptr_M[3],gang1real);//gang0
 
      
-        // Tr_data=(float *)&ssi;
         for (int i = 0; i < 4; i++)
         {
             PIDCompute(&PID_ptr_M[i]);

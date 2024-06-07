@@ -58,7 +58,7 @@ public:
         return L-L0;
     }
 
-    std::pair<float,float> RJ0RJ1convert(float DEG_O,float DEG_1);
+    void RJ0RJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
 
 
     void ComputeIK(Vec6<double> &q, Vec3<double> &p, Mat33<double> R=Mat33<double>::Identity())
