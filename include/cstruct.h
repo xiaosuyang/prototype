@@ -65,14 +65,14 @@ ec_pdo_entry_info_t slave_1_pdo_entries[] = {
     {0x7010, 0x04, 16}, /* current4 */
     {0x7010, 0x05, 16}, /* current5 */
     {0x7010, 0x06, 16}, /* current6 */
-    {0x0000, 0x00, 6},
+    {0x0000, 0x00, 6}, /* Gap */
     {0x7011, 0x01, 16}, /* voltage1 */
     {0x7011, 0x02, 16}, /* voltage2 */
     {0x7011, 0x03, 16}, /* voltage3 */
     {0x7011, 0x04, 16}, /* voltage4 */
     {0x7011, 0x05, 16}, /* voltage5 */
     {0x7011, 0x06, 16}, /* voltage6 */
-    {0x0000, 0x00, 6},
+    {0x0000, 0x00, 6}, /* Gap */
 };
 
 ec_pdo_info_t slave_1_pdos[] = {
@@ -95,26 +95,26 @@ ec_sync_info_t slave_1_syncs[] = {
  */
 
 ec_pdo_entry_info_t slave_2_pdo_entries[] = {
-    {0x7020, 0x01, 8},
-    {0x7020, 0x02, 8},
-    {0x7030, 0x01, 32},
-    {0x6000, 0x01, 32},
-    {0x6000, 0x02, 32},
-    {0x6010, 0x01, 16},
-    {0x6010, 0x02, 16},
-    {0x6010, 0x03, 16},
-    {0x6010, 0x04, 16},
-    {0x6010, 0x05, 16},
-    {0x6010, 0x06, 16},
-    {0x6010, 0x07, 16},
-    {0x6010, 0x08, 16},
+    {0x7020, 0x01, 8}, /* Commond1 */
+    {0x7020, 0x02, 8}, /* Commond2 */
+    {0x7030, 0x01, 32}, /* Target Angle */
+    {0x6000, 0x01, 32}, /* ssi */
+    {0x6000, 0x02, 32}, /* ssi1 */
+    {0x6010, 0x01, 16}, /* ain1 */
+    {0x6010, 0x02, 16}, /* ain2 */
+    {0x6010, 0x03, 16}, /* ain3 */
+    {0x6010, 0x04, 16}, /* ain4 */
+    {0x6010, 0x05, 16}, /* ain5 */
+    {0x6010, 0x06, 16}, /* ain6 */
+    {0x6010, 0x07, 16}, /* ain7 */
+    {0x6010, 0x08, 16}, /* ain8 */
 };
 
 ec_pdo_info_t slave_2_pdos[] = {
-    {0x1601, 2, slave_2_pdo_entries + 0},
-    {0x1602, 1, slave_2_pdo_entries + 2},
-    {0x1a00, 2, slave_2_pdo_entries + 3},
-    {0x1a05, 8, slave_2_pdo_entries + 5},
+    {0x1601, 2, slave_2_pdo_entries + 0}, /* write commond of moulde */
+    {0x1602, 1, slave_2_pdo_entries + 2}, /* write target of moulde */
+    {0x1a00, 2, slave_2_pdo_entries + 3}, /* read ssi of moudle */
+    {0x1a05, 8, slave_2_pdo_entries + 5}, /* read ain of moudle */
 };
 
 ec_sync_info_t slave_2_syncs[] = {
@@ -124,5 +124,6 @@ ec_sync_info_t slave_2_syncs[] = {
     {3, EC_DIR_INPUT, 2, slave_2_pdos + 2, EC_WD_DISABLE},
     {0xff}
 };
+
 
 #endif

@@ -271,25 +271,32 @@ void cyclic_task(Biped &bipins, float time)
         float fSSI[12];
         for(int i=0;i<12;i++)
         {
-            // TR_data[i]=(float *)SSI[i];
+            
             fSSI[i]=(float)SSI[i];
             TR_data[i] = &fSSI[i];
-            if (TR_data[i] == nullptr)
-            {
-                // 处理错误情况
-                std::cerr << "Error: SSI[" << i << "] is null." << std::endl;
-                exit(1);
-            }
+            TR_data[i]=(float *)&SSI[i];
         }
-        
+
 
         float Ldes = bipins.RJ2convert(RJDES[0]);
         float Lreal = bipins.RJ2convert(*TR_data[0]);
 
         float gang0des,gang1des;
         float gang0real,gang1real;
+
+        std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
+        std::cout<<"rj1 real: "<<*TR_data[3]<<'\n';
+        std::cout<<"rj2 real: "<<*TR_data[0]<<'\n';
+        std::cout<<"rj3 real: "<<*TR_data[1]<<'\n';
+        
         bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
         bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
+
+        std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
+        std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
+        std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
+        std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
+
         
         PIDSetpointSet(&PID_ptr_M[0], Ldes);//RJ2
         PIDInputSet(&PID_ptr_M[0], Lreal);
@@ -301,13 +308,16 @@ void cyclic_task(Biped &bipins, float time)
         PIDSetpointSet(&PID_ptr_M[2], gang0des);
         PIDInputSet(&PID_ptr_M[2],gang0real);//gang0
 
+    
         PIDSetpointSet(&PID_ptr_M[3], gang1des);
         PIDInputSet(&PID_ptr_M[3],gang1real);//gang0
 
-     std::cout<<"AFTER PID\n";
         for (int i = 0; i < 4; i++)
         {
             PIDCompute(&PID_ptr_M[i]);
+            std::cout<<PID_ptr_M->output<<'\n';
+            output1=(uint16_t)(PID_ptr_M->output+10)/20*65536;
+
             EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
             printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i]));
         }
