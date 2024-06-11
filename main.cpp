@@ -266,24 +266,31 @@ void cyclic_task(Biped &bipins, float time)
         SSI[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
         SSI[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
         SSI[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
-        
+        std::cout<<"AFTER READ\n";
         float * TR_data[12];
+        float fSSI[12];
         for(int i=0;i<12;i++)
         {
-            TR_data[i]=(float *)SSI[i];
+            // TR_data[i]=(float *)SSI[i];
+            fSSI[i]=(float)SSI[i];
+            TR_data[i] = &fSSI[i];
+            if (TR_data[i] == nullptr)
+            {
+                // 处理错误情况
+                std::cerr << "Error: SSI[" << i << "] is null." << std::endl;
+                exit(1);
+            }
         }
         
 
         float Ldes = bipins.RJ2convert(RJDES[0]);
         float Lreal = bipins.RJ2convert(*TR_data[0]);
- 
 
         float gang0des,gang1des;
         float gang0real,gang1real;
         bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
         bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
         
-
         PIDSetpointSet(&PID_ptr_M[0], Ldes);//RJ2
         PIDInputSet(&PID_ptr_M[0], Lreal);
      
@@ -297,7 +304,7 @@ void cyclic_task(Biped &bipins, float time)
         PIDSetpointSet(&PID_ptr_M[3], gang1des);
         PIDInputSet(&PID_ptr_M[3],gang1real);//gang0
 
-     
+     std::cout<<"AFTER PID\n";
         for (int i = 0; i < 4; i++)
         {
             PIDCompute(&PID_ptr_M[i]);
@@ -509,14 +516,14 @@ int main(int argc, char **argv)
     const float controltime = 0.02, sampletime = 0.01;
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
-    PID_ptr_M = new PIDControl[3];
+    PID_ptr_M = new PIDControl[12];
     PIDInit(&PID_ptr_M[0], Kp, Kd, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     //PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-       PIDInit(&PID_ptr_M[1], 0.05, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[1], 0.05, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     PIDInit(&PID_ptr_M[2], 0.03, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
-
+    PIDInit(&PID_ptr_M[3], 0.03, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
     printf("Started.\n");
 

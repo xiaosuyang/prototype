@@ -44,4 +44,7 @@ endforeach()
 
 add_executable(master ${SRC_FILE})
 
+link_directories("/home/debian/output/lib")
+
+
 target_link_libraries(master ${CMAKE_CURRENT_SOURCE_DIR}/output/lib/libethercat.so -pthread)
