@@ -101,6 +101,9 @@ static unsigned int off_bits_0x6000[2] = {1};
 static unsigned int off_bytes_0x6000_1[2] = {1};
 static unsigned int off_bits_0x6000_1[2] = {1};
 
+static unsigned int off_bytes_0x7010[3] = {1};
+static unsigned int off_bits_0x7010[3] = {1};
+
 static unsigned int off_bytes_0x7011[3] = {1};
 static unsigned int off_bits_0x7011[3] = {1};
 
@@ -240,10 +243,10 @@ void cyclic_task(Biped &bipins, float time)
         float Deg[3];
         P.setZero();
         P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time) - 1);
-        Deg[0] = (14 * cos(0.2 * M_PI * time) - 14);
+        Deg[0] = 0*(14 * cos(0.2 * M_PI * time) - 14);
       //  Deg[2] = 0;
        // Deg[1] = 0;
-        Deg[2] = (18 * cos(0.2 * M_PI * time) - 18);
+        Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
         Deg[1] = -1 * (Deg[0] + Deg[2]);
         // P(2)*=-1;
         bipins.ComputeIK(RjQ, P);
@@ -291,35 +294,60 @@ void cyclic_task(Biped &bipins, float time)
         
         bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
         bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
-
+       // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
         std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
         std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
         std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
         std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
 
+
+
+
+        PIDSetpointSet(&PID_ptr_M[0], gang0des);
+        PIDInputSet(&PID_ptr_M[0],gang0real);//gang0
+        PIDCompute(&PID_ptr_M[0]);
+       // PID_ptr_M[0].output=-4;
+        std::cout<<"PID输出"<<PID_ptr_M[0].output<<'\n';
+
+        PIDSetpointSet(&PID_ptr_M[1], gang1des);
+        PIDInputSet(&PID_ptr_M[1],gang1real);//gang1
+        PIDCompute(&PID_ptr_M[1]);
+     //   PID_ptr_M[1].output=-4;
+        std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
+
         
-        PIDSetpointSet(&PID_ptr_M[0], Ldes);//RJ2
-        PIDInputSet(&PID_ptr_M[0], Lreal);
+        PIDSetpointSet(&PID_ptr_M[2], RJDES[0]);//RJ2
+        PIDInputSet(&PID_ptr_M[2], *TR_data[0]);
+         PIDCompute(&PID_ptr_M[2]);
+        std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
+
      
 
-        PIDSetpointSet(&PID_ptr_M[1], RJDES[1]);
-        PIDInputSet(&PID_ptr_M[1],*TR_data[1]);//RJ3
+        PIDSetpointSet(&PID_ptr_M[3], RJDES[1]);
+        PIDInputSet(&PID_ptr_M[3],*TR_data[1]);//RJ3
+         PIDCompute(&PID_ptr_M[3]);
+         std::cout<<"PID输出"<<PID_ptr_M[3].output<<'\n';
 
-        PIDSetpointSet(&PID_ptr_M[2], gang0des);
-        PIDInputSet(&PID_ptr_M[2],gang0real);//gang0
+        
 
-    
-        PIDSetpointSet(&PID_ptr_M[3], gang1des);
-        PIDInputSet(&PID_ptr_M[3],gang1real);//gang0
 
         for (int i = 0; i < 4; i++)
         {
-            PIDCompute(&PID_ptr_M[i]);
-            std::cout<<PID_ptr_M->output<<'\n';
-            output1=(uint16_t)(PID_ptr_M->output+10)/20*65536;
+            //PIDCompute(&PID_ptr_M[i]);
+            std::cout<<PID_ptr_M[i].output<<'\n';
+            output1=(uint16_t)((PID_ptr_M[i].output+10)/20*65536);
+            std::cout<<output1<<'\n';
+            if(i<2)
+            {
+                EC_WRITE_U16(domain_pd + off_bytes_0x7010[i],output1);
+                printf("Current1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7010[i]));
+            }
+            else
+            {
 
-            EC_WRITE_U16(domain_pd + off_bytes_0x7011[i], output1);
-            printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i]));
+                EC_WRITE_U16(domain_pd + off_bytes_0x7011[i-2],output1);
+                printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i-2]));
+            }
         }
 
 
@@ -464,6 +492,30 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    off_bytes_0x7010[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 1, domain, &off_bits_0x7010[0]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[0], off_bits_0x7010[0]);
+    if (off_bytes_0x7010[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7010[1] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 2, domain, &off_bits_0x7010[1]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[1], off_bits_0x7010[1]);
+    if (off_bytes_0x7010[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7010[2] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 3, domain, &off_bits_0x7010[2]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[2], off_bits_0x7010[2]);
+    if (off_bytes_0x7010[2] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
     off_bytes_0x7011[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 1, domain, &off_bits_0x7011[0]);
     printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[0], off_bits_0x7011[0]);
     if (off_bytes_0x7011[0] < 0)
@@ -527,13 +579,13 @@ int main(int argc, char **argv)
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     PID_ptr_M = new PIDControl[12];
-    PIDInit(&PID_ptr_M[0], Kp, Kd, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[0],0.5, 0, 0, controltime, -10, 10, AUTOMATIC, REVERSE);
    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     //PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-    PIDInit(&PID_ptr_M[1], 0.05, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
-    PIDInit(&PID_ptr_M[2], 0.03, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
-    PIDInit(&PID_ptr_M[3], 0.03, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[1], 0.5, 0, 0, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[2], 0.05, 0, 0, controltime, -10, 10, AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[3], 0.05, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
     printf("Started.\n");
 
