@@ -22,17 +22,35 @@ public:
 
         if (openFile(filepath))
         {
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2 ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2des; 
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj3 ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj3des ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4 ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4des ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[0] ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[1] ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[2] ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2length ;
-            file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2lengthdes << std::endl;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj0 ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj0des; 
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj1 ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj1des ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2 ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2des; 
+            
+            file<<rj2<<"  ";
+            file<<rj2des<<"  ";
+            file<<rj3<<"  " ;
+            file<<rj3des<<"  ";
+            file<<rj1<<"  ";
+            file<<rj1des<<"  ";
+            file<<rj0<<"  ";
+            file<<rj0des<<"  ";
+            file<<rj1<<"  ";
+            file<<rj1des<<"  ";
+
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4 ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj4des ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[0] ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[1] ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[2] ;
+            // file<<std::left<<std::setw(20)<<std::setprecision(4)<< pidoutput[3] ;
+
+
+            file<<'\n';
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2length ;
+            // file <<std::left<<std::setw(20)<<std::setprecision(4)<< rj2lengthdes << std::endl;
             
             file.close();
         }
@@ -45,8 +63,8 @@ public:
         }
     }
 
-    float rj2 = 0, rj2des = 0, rj3 = 0, rj3des = 0, rj4 = 0, rj4des = 0;
-    float pidoutput[3]; // rj2,3,4 pid输出
+    float rj2 = 0, rj2des = 0, rj3 = 0, rj3des = 0, rj4 = 0, rj4des = 0,rj0=0,rj0des=0,rj1=0,rj1des=0;
+    float pidoutput[12]; // rj2,3,4 pid输出
     float rj2length=0, rj2lengthdes=0;
 
 private:

@@ -61,7 +61,9 @@
 
 #define BIGNUM 100000000.0
 PIDControl *PID_ptr_M; // 矢状面3关节，j2,j3,j4;
-
+    int sock;
+    struct sockaddr_in server;
+    char message[1000];
 /****************************************************************************/
 
 // EtherCAT
@@ -126,6 +128,9 @@ static uint8_t *domain_pd = NULL;
 int fd = -1;
 struct sockaddr_in saddr;
 DataLogger &logger = DataLogger::GET();
+
+
+LowPassFilter filter;
 
 void check_domain_state(void)
 {
@@ -242,22 +247,28 @@ void cyclic_task(Biped &bipins, float time)
         Vec3<double> P;
         float Deg[3];
         P.setZero();
-        P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time) - 1);
-        Deg[0] = 0*(14 * cos(0.2 * M_PI * time) - 14);
+        P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time+1.5*M_PI) - 1);
+       // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
+       // Deg[0] = 1*(14 * sin(0.2 * M_PI * time));
+       Deg[0]=0;
+       Deg[1]=0;
+       if(time)
+         Deg[1]=15*sin(0.4*M_PI*time+1.5*M_PI)+15;
       //  Deg[2] = 0;
        // Deg[1] = 0;
-        Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
-        Deg[1] = -1 * (Deg[0] + Deg[2]);
+        //Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
+       // Deg[1] = -1 * (Deg[0] + Deg[2])*0;
         // P(2)*=-1;
         bipins.ComputeIK(RjQ, P);
 
-        std::cout << "坐标\n"
-                  << P << '\n';
+        // std::cout << "坐标\n"
+        //           << P << '\n';
         float RJDES[4];
         RJDES[0] = Deg[0];
         RJDES[1] = Deg[1];
-        RJDES[2] = 0;
-        RJDES[3]=0;
+        RJDES[2] =0;//RJ0
+        //RJDES[2] = 5*sin(0.2 * M_PI * time);//RJ0
+        RJDES[3]=0;//RJ1
 
        // unsigned long ssi[4];
         std::vector<unsigned long> ssi;
@@ -269,7 +280,6 @@ void cyclic_task(Biped &bipins, float time)
         SSI[1]=EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
         SSI[2]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
         SSI[3]=EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
-        std::cout<<"AFTER READ\n";
         float * TR_data[12];
         float fSSI[12];
         for(int i=0;i<12;i++)
@@ -286,76 +296,107 @@ void cyclic_task(Biped &bipins, float time)
 
         float gang0des,gang1des;
         float gang0real,gang1real;
-
-        std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
+        filter.update(*TR_data[2]);
+        //std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
         std::cout<<"rj1 real: "<<*TR_data[3]<<'\n';
-        std::cout<<"rj2 real: "<<*TR_data[0]<<'\n';
+      //  std::cout<<"rj2 real: "<<*TR_data[0]<<'\n';
+       // std::cout<<"rj2 des: "<<RJDES[0]<<'\n';
         std::cout<<"rj3 real: "<<*TR_data[1]<<'\n';
-        
+        std::cout<<"rj3 des:"<<RJDES[1]<<'\n';
         bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
         bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
        // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
-        std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
-        std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
-        std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
-        std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
+        // std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
+        // std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
+        // std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
+        // std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
 
-
+        logger.rj1=RJDES[3];
+        logger.rj1des=*TR_data[3];
 
 
         PIDSetpointSet(&PID_ptr_M[0], gang0des);
         PIDInputSet(&PID_ptr_M[0],gang0real);//gang0
         PIDCompute(&PID_ptr_M[0]);
+        //logger.rj0des=RJDES[2];
+        //logger.rj0=*TR_data[2];
        // PID_ptr_M[0].output=-4;
         std::cout<<"PID输出"<<PID_ptr_M[0].output<<'\n';
+        //logger.pidoutput[0]=PID_ptr_M[0].output;
+
 
         PIDSetpointSet(&PID_ptr_M[1], gang1des);
         PIDInputSet(&PID_ptr_M[1],gang1real);//gang1
         PIDCompute(&PID_ptr_M[1]);
+       // logger.rj1des=RJDES[3];
+       // logger.rj1=*TR_data[3];
      //   PID_ptr_M[1].output=-4;
         std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
+        logger.pidoutput[1]=PID_ptr_M[1].output;
 
-        
-        PIDSetpointSet(&PID_ptr_M[2], RJDES[0]);//RJ2
-        PIDInputSet(&PID_ptr_M[2], *TR_data[0]);
-         PIDCompute(&PID_ptr_M[2]);
+
+        float rj2desl=bipins.RJ2convert(RJDES[0]);
+        float rj2reall=bipins.RJ2convert(*TR_data[0]);
+        PIDSetpointSet(&PID_ptr_M[2], rj2desl);//RJ2
+        PIDInputSet(&PID_ptr_M[2], rj2reall);
+        PIDCompute(&PID_ptr_M[2]);
+       // logger.rj2des=RJDES[0];
+      //  logger.rj2=*TR_data[0];
         std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
-
+        logger.pidoutput[2]=PID_ptr_M[2].output;
      
-
+        float RJ3Ldes=bipins.RJ3Convert(RJDES[1]);
+        float RJ3L=bipins.RJ3Convert(*TR_data[1]);
         PIDSetpointSet(&PID_ptr_M[3], RJDES[1]);
-        PIDInputSet(&PID_ptr_M[3],*TR_data[1]);//RJ3
-         PIDCompute(&PID_ptr_M[3]);
+        PIDInputSet(&PID_ptr_M[3],*TR_data[1]);
+        PIDCompute(&PID_ptr_M[3]);
+        FeedforwardAdd(&PID_ptr_M[3],RJ3Ldes);
+       // logger.rj3des=RJDES[1];
+       // logger.rj3=*TR_data[1];
+  //       PID_ptr_M[3].output=2;
+        std::cout<<"膝部缸期望伸长量:"<<RJ3Ldes<<'\n';
+        std::cout<<"膝部缸实际伸长量"<<RJ3L<<'\n';
+        
          std::cout<<"PID输出"<<PID_ptr_M[3].output<<'\n';
-
+         //logger.pidoutput[3]=PID_ptr_M[3].output;
+        
         
 
 
         for (int i = 0; i < 4; i++)
         {
             //PIDCompute(&PID_ptr_M[i]);
-            std::cout<<PID_ptr_M[i].output<<'\n';
+           // std::cout<<PID_ptr_M[i].output<<'\n';
             output1=(uint16_t)((PID_ptr_M[i].output+10)/20*65536);
-            std::cout<<output1<<'\n';
+           // std::cout<<output1<<'\n';
             if(i<2)
             {
                 EC_WRITE_U16(domain_pd + off_bytes_0x7010[i],output1);
-                printf("Current1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7010[i]));
+               // printf("Current1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7010[i]));
             }
             else
             {
 
                 EC_WRITE_U16(domain_pd + off_bytes_0x7011[i-2],output1);
-                printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i-2]));
+                //printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i-2]));
             }
         }
 
 
-        counter = 2;
+        counter = 0;
 
         std::cout << "-------------------\n";
 
-        logger.Savedata();
+       // logger.Savedata();
+
+
+       char sendBuf[128];
+        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[1],*TR_data[1],*TR_data[2],*TR_data[3],
+        PID_ptr_M[3].alteredKp,PID_ptr_M[3].dispKi,RJ3Ldes,PID_ptr_M[3].FF,PID_ptr_M[3].output);
+        sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
+
+
+        
     }
 
     blink++;
@@ -384,21 +425,39 @@ void signal_handler(int signum)
 int main(int argc, char **argv)
 {
     
-    // std::vector<float> vectest{1,2,3,4},vectest1{5,6,7,8};
-    
-    // vectest.insert(vectest.end(),vectest1.begin(),vectest1.end());
-    
-    // auto testpair=std::make_pair(1,2);
 
-    float Kp = 0.01, Kd = 0;
+    fd=socket(PF_INET,SOCK_DGRAM,0);
+
+    if(fd==-1){
+        perror("socket");
+        exit(-1);
+    }
+
+     // 服务器的地址信息
+
+    saddr.sin_family = AF_INET;
+    saddr.sin_port = htons(9999);
+    inet_pton(AF_INET, "192.168.7.1", &saddr.sin_addr.s_addr);
+
+ 
+   
+
+    float Kp = 0.01, Ki = 0,Ks=0;
     if (argc < 2)
         std::cout << "No Kp" << std::endl;
     else if (argc == 2)
         Kp = atof(argv[1]);
+    else if(argc==3)
+    {
+        Kp = atof(argv[1]);
+        Ki = atof(argv[2]);
+    }
     else
     {
         Kp = atof(argv[1]);
-        Kd = atof(argv[2]);
+        Ki = atof(argv[2]);
+        Ks= atof(argv[3]);
+
     }
 
     // Kp = std::atof(argv[1]);
@@ -578,14 +637,18 @@ int main(int argc, char **argv)
     const float controltime = 0.02, sampletime = 0.01;
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
+    filter.set(1/sampletime,50);
     PID_ptr_M = new PIDControl[12];
-    PIDInit(&PID_ptr_M[0],0.5, 0, 0, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[0],0.3, 0, 0,0, controltime, -10, 10, AUTOMATIC, REVERSE);
    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     //PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-    PIDInit(&PID_ptr_M[1], 0.5, 0, 0, controltime, -10, 10, AUTOMATIC, REVERSE);
-    PIDInit(&PID_ptr_M[2], 0.05, 0, 0, controltime, -10, 10, AUTOMATIC,DIRECT);
-    PIDInit(&PID_ptr_M[3], 0.05, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[1], 0.3, 0, 0,0, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[2], 0.05, 0, 0,0, controltime, -10, 10, AUTOMATIC,DIRECT);
+    /*
+    PIDK: 0.06,0.004,0,0.08
+    */
+    PIDInit(&PID_ptr_M[3], 0.06, 0.004, 0,0.08, controltime, -10, 10, AUTOMATIC,REVERSE);
 
     printf("Started.\n");
 

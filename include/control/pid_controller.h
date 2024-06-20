@@ -97,7 +97,7 @@ typedef struct
     float dispKp;
     float dispKi;
     float dispKd;
-    
+    float dInput;
     // 
     // Gain constant values that the controller alters for
     // its own use
@@ -105,6 +105,7 @@ typedef struct
     float alteredKp;
     float alteredKi;
     float alteredKd;
+    float Ks;
     
     // 
     // The Integral Term
@@ -122,7 +123,7 @@ typedef struct
     // 
     float outMin;
     float outMax;
-    
+    float FF;
     // 
     // The user chosen operating point
     // 
@@ -173,7 +174,7 @@ PIDControl;
 // Returns:
 //      Nothing.
 // 
-extern void PIDInit(PIDControl *pid, float kp, float ki, float kd, 
+extern void PIDInit(PIDControl *pid, float kp, float ki, float kd,float KS, 
                     float sampleTimeSeconds, float minOutput, float maxOutput, 
                     PIDMode mode, PIDDirection controllerDirection);     	
 
@@ -189,6 +190,11 @@ extern void PIDInit(PIDControl *pid, float kp, float ki, float kd,
 //      True if in AUTOMATIC. False if in MANUAL.
 //                     
 extern bool PIDCompute(PIDControl *pid); 
+/*
+手调前馈
+*/
+extern bool FeedforwardAdd(PIDControl *pid,float input);
+
 
 // 
 // PID Mode Set
@@ -204,6 +210,9 @@ extern bool PIDCompute(PIDControl *pid);
 // Returns:
 //      Nothing.
 //              
+
+
+
 extern void PIDModeSet(PIDControl *pid, PIDMode mode);                                                                                                                                       
 
 // 

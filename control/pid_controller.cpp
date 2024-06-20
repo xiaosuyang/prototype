@@ -37,16 +37,16 @@
 // Headers
 //*********************************************************************************
 #include "pid_controller.h"
-
+#include <stdio.h>
 //*********************************************************************************
 // Macros and Globals
 //*********************************************************************************
 #define CONSTRAIN(x,lower,upper)    ((x)<(lower)?(lower):((x)>(upper)?(upper):(x)))
-
+float lastinput=0;
 //*********************************************************************************
 // Functions
 //*********************************************************************************
-void PIDInit(PIDControl *pid, float kp, float ki, float kd, 
+void PIDInit(PIDControl *pid, float kp, float ki, float kd,float KS, 
              float sampleTimeSeconds, float minOutput, float maxOutput, 
              PIDMode mode, PIDDirection controllerDirection)     	
 {
@@ -57,7 +57,7 @@ void PIDInit(PIDControl *pid, float kp, float ki, float kd,
     pid->lastInput = 0.0f;
     pid->output = 0.0f;
     pid->setpoint = 0.0f;
-    
+    pid->Ks=KS;
     if(sampleTimeSeconds > 0.0f)
     {
         pid->sampleTime = sampleTimeSeconds;
@@ -75,7 +75,7 @@ void PIDInit(PIDControl *pid, float kp, float ki, float kd,
 bool
 PIDCompute(PIDControl *pid) 
 {
-    float error, dInput;
+    float error;
 
     if(pid->mode == MANUAL)
     {
@@ -89,13 +89,13 @@ PIDCompute(PIDControl *pid)
     pid->iTerm += (pid->alteredKi) * error;
     
     // Constrain the integrator to make sure it does not exceed output bounds
-    pid->iTerm = CONSTRAIN( (pid->iTerm), (pid->outMin), (pid->outMax) );
+    pid->iTerm = CONSTRAIN( (pid->iTerm), 0.5*(pid->outMin),0.5* (pid->outMax) );
     
     // Take the "derivative on measurement" instead of "derivative on error"
-    dInput = (pid->input) - (pid->lastInput);
+    pid->dInput = (pid->input) - (pid->lastInput);
     
     // Run all the terms together to get the overall output
-    pid->output = (pid->alteredKp) * error + (pid->iTerm) - (pid->alteredKd) * dInput;
+    pid->output = (pid->alteredKp) * error + (pid->iTerm) - (pid->alteredKd) * pid->dInput;
     
     // Bound the output
     pid->output = CONSTRAIN( (pid->output), (pid->outMin), (pid->outMax) );
@@ -222,7 +222,15 @@ PIDSampleTimeSet(PIDControl *pid, float sampleTimeSeconds)
     }
 }
 
+bool FeedforwardAdd(PIDControl *pid,float input)
+{
+ 
+   pid->FF=1*pid->Ks*(input-lastinput)/pid->sampleTime;
+  lastinput=input;
+   //printf("前馈值%f\n",FF);
+  pid->output=CONSTRAIN(pid->output+pid->FF,(pid->outMin), (pid->outMax));
 
+}
 void 
 PIDSetpointSet(PIDControl *pid, float setpoint) { pid->setpoint = setpoint; }
 

@@ -57,6 +57,20 @@ public:
         float L=OA*sin(DEG)-AB*cos(asin((OA*cos(DEG)-e)/AB));
         return L-L0;
     }
+    
+    float RJ3Convert(float DEG)
+    {
+        float DEG0=130;
+        DEG0=deg2rad(DEG0);
+        DEG=deg2rad(DEG);
+
+        float OA=222.4,OB=30;
+
+        float AB0=sqrt(OA*OA+OB*OB-2*OA*OB*cos(DEG0));
+        float AB=sqrt(OA*OA+OB*OB-2*OA*OB*cos(DEG0-DEG));
+
+        return AB-AB0;
+    }
 
     void RJ0RJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
 
@@ -72,7 +86,7 @@ public:
 
         double C = r.norm();
         double Clknee = (C * C - pow(thighLinkLength, 2) - pow(calfLinkLength, 2)) / (2 * thighLinkLength * calfLinkLength);
-        std::cout<<"CLknee\n"<<Clknee<<'\n';
+       // std::cout<<"CLknee\n"<<Clknee<<'\n';
         if (Clknee >= 1)
             q(3) = 0;
         else if (Clknee <= -1)

@@ -31,6 +31,36 @@ SOFTWARE.
 #define PROJECT_MATHUTILITIES_H
 
 #include <Eigen/Dense>
+#include <cmath>
+
+
+
+class LowPassFilter {
+public:
+
+    LowPassFilter(){};
+ 
+    // 更新滤波器输出
+    double update(double input) {
+        double output = alpha_ * input + (1.0 - alpha_) * prev_output_;
+        prev_output_ = output;
+        return output;
+    }
+    void set(double sample_rate, double cutoff_frequency)
+    {
+      double dt = 1.0 / sample_rate;
+      double RC = 1.0 / (cutoff_frequency * 2.0 * M_PI);
+      alpha_ = dt / (dt + RC);
+      prev_output_ = 0.0;
+    }
+ 
+private:
+    double alpha_;
+    double prev_output_;
+};
+
+
+
 
 /*!
  * Square a number
@@ -79,6 +109,7 @@ float  deg2rad(T deg)
   return deg/180*M_PI;
 
 }
+
 
 
 
