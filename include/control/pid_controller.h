@@ -84,6 +84,8 @@ typedef struct
     // Previous input to the PID Controller
     // 
     float lastInput;
+
+    float FFlastinput;
     
     // 
     // Output of the PID Controller

@@ -246,14 +246,23 @@ void cyclic_task(Biped &bipins, float time)
         Vec6<double> RjQ;
         Vec3<double> P;
         float Deg[3];
+        float KuanDeg[2];
         P.setZero();
         P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time+1.5*M_PI) - 1);
        // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
        // Deg[0] = 1*(14 * sin(0.2 * M_PI * time));
+       KuanDeg[0]=0;
+       KuanDeg[1]=0;
        Deg[0]=0;
        Deg[1]=0;
+
        if(time)
-         Deg[1]=15*sin(0.4*M_PI*time+1.5*M_PI)+15;
+       {
+         //Deg[1]=15*sin(0.2*M_PI*time+1.5*M_PI);
+        // Deg[0]=15*sin(M_PI*time);
+            KuanDeg[0]=2.5*sin(M_PI*time);
+       }
+        
       //  Deg[2] = 0;
        // Deg[1] = 0;
         //Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
@@ -266,9 +275,9 @@ void cyclic_task(Biped &bipins, float time)
         float RJDES[4];
         RJDES[0] = Deg[0];
         RJDES[1] = Deg[1];
-        RJDES[2] =0;//RJ0
+        RJDES[2] =KuanDeg[0];//RJ0
         //RJDES[2] = 5*sin(0.2 * M_PI * time);//RJ0
-        RJDES[3]=0;//RJ1
+        RJDES[3]=KuanDeg[1];//RJ1
 
        // unsigned long ssi[4];
         std::vector<unsigned long> ssi;
@@ -298,11 +307,10 @@ void cyclic_task(Biped &bipins, float time)
         float gang0real,gang1real;
         filter.update(*TR_data[2]);
         //std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
-        std::cout<<"rj1 real: "<<*TR_data[3]<<'\n';
-      //  std::cout<<"rj2 real: "<<*TR_data[0]<<'\n';
-       // std::cout<<"rj2 des: "<<RJDES[0]<<'\n';
+        std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
+        std::cout<<"rj0 des: "<<RJDES[2]<<'\n';
         std::cout<<"rj3 real: "<<*TR_data[1]<<'\n';
-        std::cout<<"rj3 des:"<<RJDES[1]<<'\n';
+       // std::cout<<"rj3 des:"<<RJDES[1]<<'\n';
         bipins.RJ0RJ1convert(RJDES[2],RJDES[3],gang0des,gang1des);
         bipins.RJ0RJ1convert(*TR_data[2],*TR_data[3],gang0real,gang1real);
        // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
@@ -318,31 +326,37 @@ void cyclic_task(Biped &bipins, float time)
         PIDSetpointSet(&PID_ptr_M[0], gang0des);
         PIDInputSet(&PID_ptr_M[0],gang0real);//gang0
         PIDCompute(&PID_ptr_M[0]);
+        FeedforwardAdd(&PID_ptr_M[0],gang0des);
         //logger.rj0des=RJDES[2];
         //logger.rj0=*TR_data[2];
        // PID_ptr_M[0].output=-4;
-        std::cout<<"PID输出"<<PID_ptr_M[0].output<<'\n';
+       // std::cout<<"PID输出"<<PID_ptr_M[0].output<<'\n';
         //logger.pidoutput[0]=PID_ptr_M[0].output;
 
 
         PIDSetpointSet(&PID_ptr_M[1], gang1des);
         PIDInputSet(&PID_ptr_M[1],gang1real);//gang1
         PIDCompute(&PID_ptr_M[1]);
+        FeedforwardAdd(&PID_ptr_M[1],gang1des);
        // logger.rj1des=RJDES[3];
        // logger.rj1=*TR_data[3];
      //   PID_ptr_M[1].output=-4;
-        std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
+       // std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
         logger.pidoutput[1]=PID_ptr_M[1].output;
 
 
         float rj2desl=bipins.RJ2convert(RJDES[0]);
         float rj2reall=bipins.RJ2convert(*TR_data[0]);
+        //std::cout<<"期望伸长量"<<rj2desl<<'\n';
+       // std::cout<<"实际伸长量"<<rj2reall<<'\n';
+
         PIDSetpointSet(&PID_ptr_M[2], rj2desl);//RJ2
-        PIDInputSet(&PID_ptr_M[2], rj2reall);
+        PIDInputSet(&PID_ptr_M[2],rj2reall);
         PIDCompute(&PID_ptr_M[2]);
+         FeedforwardAdd(&PID_ptr_M[2], -1*rj2desl);
        // logger.rj2des=RJDES[0];
       //  logger.rj2=*TR_data[0];
-        std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
+      //  std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
         logger.pidoutput[2]=PID_ptr_M[2].output;
      
         float RJ3Ldes=bipins.RJ3Convert(RJDES[1]);
@@ -354,10 +368,10 @@ void cyclic_task(Biped &bipins, float time)
        // logger.rj3des=RJDES[1];
        // logger.rj3=*TR_data[1];
   //       PID_ptr_M[3].output=2;
-        std::cout<<"膝部缸期望伸长量:"<<RJ3Ldes<<'\n';
-        std::cout<<"膝部缸实际伸长量"<<RJ3L<<'\n';
+        //std::cout<<"膝部缸期望伸长量:"<<RJ3Ldes<<'\n';
+      //  std::cout<<"膝部缸实际伸长量"<<RJ3L<<'\n';
         
-         std::cout<<"PID输出"<<PID_ptr_M[3].output<<'\n';
+      //   std::cout<<"PID输出"<<PID_ptr_M[3].output<<'\n';
          //logger.pidoutput[3]=PID_ptr_M[3].output;
         
         
@@ -365,10 +379,9 @@ void cyclic_task(Biped &bipins, float time)
 
         for (int i = 0; i < 4; i++)
         {
-            //PIDCompute(&PID_ptr_M[i]);
-           // std::cout<<PID_ptr_M[i].output<<'\n';
+
             output1=(uint16_t)((PID_ptr_M[i].output+10)/20*65536);
-           // std::cout<<output1<<'\n';
+     
             if(i<2)
             {
                 EC_WRITE_U16(domain_pd + off_bytes_0x7010[i],output1);
@@ -391,8 +404,12 @@ void cyclic_task(Biped &bipins, float time)
 
 
        char sendBuf[128];
-        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[1],*TR_data[1],*TR_data[2],*TR_data[3],
-        PID_ptr_M[3].alteredKp,PID_ptr_M[3].dispKi,RJ3Ldes,PID_ptr_M[3].FF,PID_ptr_M[3].output);
+        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0],*TR_data[0],*TR_data[2],*TR_data[3],
+        // PID_ptr_M[2].alteredKp,PID_ptr_M[2].dispKi,rj2desl,PID_ptr_M[2].FF,PID_ptr_M[2].output);
+
+        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f\n", RJDES[2],*TR_data[2],*TR_data[3],
+        PID_ptr_M[0].alteredKp,PID_ptr_M[0].dispKi,gang1des,gang0des);
+
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
 
 
@@ -634,17 +651,24 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    const float controltime = 0.02, sampletime = 0.01;
+    const float controltime = 0.01, sampletime = 0.01;
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     filter.set(1/sampletime,50);
     PID_ptr_M = new PIDControl[12];
-    PIDInit(&PID_ptr_M[0],0.3, 0, 0,0, controltime, -10, 10, AUTOMATIC, REVERSE);
+
+     /*
+    PIDK: 0.8,0.2,0,-0.1
+    */
+    PIDInit(&PID_ptr_M[0],0.8, 0.2, 0,-0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     //PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-    PIDInit(&PID_ptr_M[1], 0.3, 0, 0,0, controltime, -10, 10, AUTOMATIC, REVERSE);
-    PIDInit(&PID_ptr_M[2], 0.05, 0, 0,0, controltime, -10, 10, AUTOMATIC,DIRECT);
+    PIDInit(&PID_ptr_M[1], 0.8, 0.2, 0,-0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+     /*
+    PIDK: 0.065,0.024,0,-0.02
+    */
+    PIDInit(&PID_ptr_M[2], 0.065, 0.024, 0,-0.02, controltime, -10, 10, AUTOMATIC,DIRECT);
     /*
     PIDK: 0.06,0.004,0,0.08
     */

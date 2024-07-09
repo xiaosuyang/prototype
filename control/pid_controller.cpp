@@ -225,8 +225,8 @@ PIDSampleTimeSet(PIDControl *pid, float sampleTimeSeconds)
 bool FeedforwardAdd(PIDControl *pid,float input)
 {
  
-   pid->FF=1*pid->Ks*(input-lastinput)/pid->sampleTime;
-  lastinput=input;
+  pid->FF=1*pid->Ks*(input-pid->FFlastinput)/pid->sampleTime;
+  pid->FFlastinput=input;
    //printf("前馈值%f\n",FF);
   pid->output=CONSTRAIN(pid->output+pid->FF,(pid->outMin), (pid->outMax));
 
