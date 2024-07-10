@@ -72,6 +72,8 @@ public:
         return AB-AB0;
     }
 
+    void RJ4RJ5convert(float DEG_4,float DEG_5,float &L4, float &L5);
+
     void RJ0RJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
 
 
