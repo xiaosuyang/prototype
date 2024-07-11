@@ -28,9 +28,10 @@ void Biped::RJ0RJ1convert(float DEG_0,float DEG_1,float &L0,float &L1)
 
 void Biped::RJ4RJ5convert(float DEG_4,float DEG_5,float &L4, float &L5)
 {
-    float DEG_40=130;
+    float DEG_40=55.29;
     DEG_40=deg2rad( DEG_40);
     DEG_4=deg2rad(DEG_4);
+    DEG_5=deg2rad(DEG_5);
 
     float OA4=25,OB4=188.64;
 
@@ -41,7 +42,8 @@ void Biped::RJ4RJ5convert(float DEG_4,float DEG_5,float &L4, float &L5)
     Vec3<float> W_OA(0,-45,150);
     Vec3<float> OB_5(0,-45,0);
 
-    Vec3<float> W_OB=ori::coordinateRotation(ori::CoordinateAxis::Y,DEG_4)*ori::coordinateRotation(ori::CoordinateAxis::X,DEG_5);
+    Vec3<float> W_OB=ori::coordinateRotation(ori::CoordinateAxis::Y,DEG_4)*ori::coordinateRotation(ori::CoordinateAxis::X,DEG_5)*OB_5;
+   // std::cout<<"W_OB:\n"<<W_OB<<'\n';
     Vec3<float> AB_initial(0,0,150);
     Vec3<float> W_AB=W_OA-W_OB;
     L5=W_AB.norm()-AB_initial.norm();
