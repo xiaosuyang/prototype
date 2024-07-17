@@ -23,6 +23,12 @@ set(CMAKE_CXX_COMPILER "${CROSS_CHAIN_PATH}/bin/arm-linux-gnueabihf-g++")
 set(CMAKE_CXX_STANDARD 14)
 
 
+# set (BOOST_ROOT /usr/local/boost)
+# set (BOOST_INCLUDEDIR ${BOOST_ROOT}/include)
+# set (BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
+# find_package(Boost REQUIRED)
+
+
 find_package(Eigen3 REQUIRED)
 message("Eigen 库目录" " ${EIGEN3_INCLUDE_DIR}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/output/include)
@@ -31,8 +37,9 @@ file(GLOB INCLUDE_DIRS "include/*")
 list(APPEND INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 message("包含目录：" "${INCLUDE_DIRS}")
 include_directories(${INCLUDE_DIRS}
-"${EIGEN3_INCLUDE_DIR}")
-
+"${EIGEN3_INCLUDE_DIRS}"
+# ${Boost_INCLUDE_DIRS}
+)
 
 
 file(GLOB_RECURSE SRC_FILE "*.cpp")

@@ -25,6 +25,20 @@ public:
         thighLinkLength = 0.460; //
         calfLinkLength = 0.37;
         toeLinkLength = 0.098;
+
+        axis.push_back(Vec3<double>(0,0,1));
+        axis.push_back(Vec3<double>(1,0,0));
+        axis.push_back(Vec3<double>(0,1,0));
+        axis.push_back(Vec3<double>(0,1,0));
+        axis.push_back(Vec3<double>(0,1,0));
+        axis.push_back(Vec3<double>(1,0,0));
+
+        axisname.push_back(ori::CoordinateAxis::Z);
+        axisname.push_back(ori::CoordinateAxis::X);
+        axisname.push_back(ori::CoordinateAxis::Y);
+        axisname.push_back(ori::CoordinateAxis::Y);
+        axisname.push_back(ori::CoordinateAxis::Y);
+        axisname.push_back(ori::CoordinateAxis::X);
     }
     double toeLinkLength;
     double thighLinkLength;
@@ -34,6 +48,10 @@ public:
     double leg_offset_z;
     double mass;
     double waistwidth;
+    std::vector<Vec3<double>> axis;
+    std::vector<ori::CoordinateAxis> axisname;
+    // std::array<double,6> Initialq{0,0,-0.338,0.7616,-0.425,0};
+    double Initialq[6]={0,0,-0.338,0.7616,-0.425,0};
     template <typename T>
     float sign(T num)
     {
@@ -113,6 +131,41 @@ public:
         q(2) = atan2(-R1(2, 0), R1(2, 2));
       //  std::cout<<"逆运动解\n"<<q<<'\n';
     }
+
+    void IKinbodyframe(Biped &_biped, Vec6<double> &q, Vec3<double> *p, int leg, Mat33<double> R=Mat33<double>::Identity())
+    {
+        double side = -1.0; // 1 for Left legs; -1 for right legs; leg0:rightleg;
+        if (leg == 1)
+        {
+            side = 1.0;
+        }
+        Vec3<double> pbiped;
+        pbiped << _biped.leg_offset_x, side * _biped.leg_offset_y, _biped.leg_offset_z; // trt0
+        Vec3<double> r;
+        r = *p - pbiped;
+        std::cout << "IKinbodyframe,r:\n"
+                  << r << '\n';
+        ComputeIK(q, r, R);
+    }
+
+    Vec3<double> getHip2Location(int leg)
+    {
+        assert(leg >= 0 && leg < 2);
+        Vec3<double> pHip = Vec3<double>::Zero();
+        if (leg == 1)
+        {
+            pHip(0) = leg_offset_x;
+            pHip(1) = leg_offset_y;
+            pHip(2) = leg_offset_z;
+        }
+        if (leg == 0)
+        {
+            pHip(0) = leg_offset_x;
+            pHip(1) = -leg_offset_y;
+            pHip(2) = leg_offset_z;
+        }
+        return pHip;
+    };
 };
 
 #endif

@@ -67,7 +67,32 @@ void KeyBoard::changeValue(){
         break;
     }
 }
-
+// UserCommand KeyBoard::checkCmd(){
+//     switch (_c){
+//     // case ' ':
+//     //     return UserCommand::EXIT;
+//     case '1':
+//         return L2_B;
+//     case '2':
+//         return L2_A;
+//     case '3':
+//         return L2_X;
+//     case '4':
+//         return START;
+//     case '5':
+//         return L2_Y;
+//     case '0':
+//         return L1_X;
+//     case '9':
+//         return L1_A;
+//     case '8':
+//         return L1_Y;
+//     case ' ':
+//         return NONE;
+//     default:
+//         return NONE;
+//     }
+// }
 void* KeyBoard::runKeyBoard(void *arg){
     ((KeyBoard*)arg)->run(NULL);
 }

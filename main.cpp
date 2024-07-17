@@ -50,6 +50,17 @@
 #include "datalogger.h"
 #include "Eigen/Dense"
 #include "biped.h"
+
+//add
+#include "../interface/CheatIO.h"
+#include "../include/checkjoint.h"
+#include "../include/OrientationEstimator.h"
+#include "../include/PositionVelocityEstimator.h"
+#include "../include/utility/cppTypes.h"
+#include "../include/ControlFSMData.h"
+#include "../include/DesiredCommand.h"
+#include "../include/FSM/FSM.h"
+
 /****************************************************************************/
 
 // Application parameters
@@ -130,6 +141,11 @@ struct sockaddr_in saddr;
 DataLogger &logger = DataLogger::GET();
 
 LowPassFilter filter;
+
+float Deg[3];
+float KuanDeg[2];
+float rj4angle = 0, rj5angle = 0;
+unsigned long SSI[12];
 
 void check_domain_state(void)
 {
@@ -225,7 +241,7 @@ void check_slave3_config_states(void)
     sc3_ana_in_state = s;
 }
 
-void cyclic_task(Biped &bipins, float time)
+void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 {
     // receive process data
     ecrt_master_receive(master);
@@ -244,9 +260,9 @@ void cyclic_task(Biped &bipins, float time)
         double LEGlength = bipins.calfLinkLength + bipins.thighLinkLength + bipins.toeLinkLength;
         Vec6<double> RjQ;
         Vec3<double> P;
-        float Deg[3];
-        float KuanDeg[2];
-        float rj4angle=0,rj5angle=0;
+        // float Deg[3];
+        // float KuanDeg[2];
+        // float rj4angle=0,rj5angle=0;
         P.setZero();
         P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time + 1.5 * M_PI) - 1);
         // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
@@ -262,7 +278,8 @@ void cyclic_task(Biped &bipins, float time)
             // Deg[0]=15*sin(M_PI*time);
            // KuanDeg[0] = 2.5 * sin(M_PI * time);
            // rj4angle=-12*sin(M_PI*time);
-           rj5angle=-10*sin(M_PI*time);
+           _FSMController->run();
+        //    rj5angle=-10*sin(M_PI*time);
         }
 
         //  Deg[2] = 0;
@@ -286,7 +303,6 @@ void cyclic_task(Biped &bipins, float time)
 
         // unsigned long ssi[4];
         std::vector<unsigned long> ssi;
-        unsigned long SSI[12];
         for (int i = 0; i < 12; i++)
             SSI[i] = 0;
 
@@ -435,8 +451,8 @@ void cyclic_task(Biped &bipins, float time)
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0],*TR_data[0],*TR_data[2],*TR_data[3],
         // PID_ptr_M[2].alteredKp,PID_ptr_M[2].dispKi,rj2desl,PID_ptr_M[2].FF,PID_ptr_M[2].output);
 
-        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f\n", RJDES[5], *TR_data[4], *TR_data[5],
-                PID_ptr_M[4].output, PID_ptr_M[5].output, L4real, L5real);
+        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[5], *TR_data[4], *TR_data[5],
+                PID_ptr_M[4].output, PID_ptr_M[5].output, L4real, L5real,Deg[0],Deg[1]);
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
     }
@@ -481,6 +497,38 @@ int main(int argc, char **argv)
     saddr.sin_port = htons(9999);
     inet_pton(AF_INET, "192.168.7.1", &saddr.sin_addr.s_addr);
 
+    //control设置
+    double dt = 0.001;
+    Biped robot;
+    CheatIO* IOptr = new CheatIO("biped");
+    LegController* Legctrlptr = new LegController(robot);
+    LowlevelCmd *cmd = new LowlevelCmd();
+    LowlevelState *state = new LowlevelState();
+    StateEstimate stateEstimate;
+    StateEstimatorContainer *stateEstimator = new StateEstimatorContainer(state,
+                                                                          Legctrlptr->data,
+                                                                          &stateEstimate);
+
+    stateEstimator->addEstimator<CheaterOrientationEstimator>();
+    stateEstimator->addEstimator<CheaterPositionVelocityEstimator>();
+
+
+    DesiredStateCommand* desiredStateCommand = new DesiredStateCommand(&stateEstimate, dt);
+
+
+
+    ControlFSMData* _controlData = new ControlFSMData;
+    _controlData->_biped = &robot;
+    _controlData->_stateEstimator = stateEstimator;
+    _controlData->_legController =  Legctrlptr;
+    _controlData->_desiredStateCommand = desiredStateCommand;
+    _controlData->_interface = IOptr;
+    _controlData->_lowCmd = cmd;
+    _controlData->_lowState = state;
+
+    FSM* _FSMController = new FSM(_controlData);
+
+    //PID传参
     float Kp = 0.01, Ki = 0, Ks = 0;
     if (argc < 2)
         std::cout << "No Kp" << std::endl;
@@ -718,7 +766,7 @@ int main(int argc, char **argv)
             else
                 time = 0;
 
-            cyclic_task(bipedinstance, time);
+            cyclic_task(bipedinstance, time, _FSMController);
             user_alarms++;
         }
         // std::cout<<"Keyboard Value\n"<<cmd_ptr->uservalue.direction<<'\n';
@@ -726,6 +774,15 @@ int main(int argc, char **argv)
 
     delete[] PID_ptr_M;
     delete cmdptr;
+    delete _FSMController;
+    delete _controlData;
+    delete desiredStateCommand;
+    delete stateEstimator;
+    delete state;
+    delete cmd;
+    delete Legctrlptr;
+    delete IOptr;
+
     return 0;
 }
 

@@ -24,6 +24,17 @@ enum FSMMode{
     CHANGE
 };
 
+enum class FSMStateName{
+    // EXIT,
+    INVALID,
+    PASSIVE,
+    PDSTAND,
+    QPSTAND,
+    WALKING,
+    PUSHING,
+    PROBE,
+    DEBUG,       // slam
+};
 
 
 #endif  // ENUMCLASS_H

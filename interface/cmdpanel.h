@@ -16,6 +16,31 @@ struct UserValue
 {
     float direction=0;
     bool Starttime=false;
+
+    float lx;
+    float ly;
+    float rx;
+    float ry;
+    float L2;
+    float vx; // vx in body frame
+    float vy; // vy in body frame
+    float turn_rate;
+
+    UserValue()
+    {
+        setZero();
+    }
+    void setZero()
+    {
+        lx = 0;
+        ly = 0;
+        rx = 0;
+        ry = 0;
+        L2 = 0;
+        vx = 0;
+        vy = 0;
+        turn_rate = 0;
+    }
 };
 
 class CmdPanel{

@@ -45,7 +45,7 @@ SOFTWARE.
 #include <type_traits>
 
 #include "MathUtilities.h"
-#include "utility/cppTypes.h"
+#include "../utility/cppTypes.h"
 
 namespace ori {
 
