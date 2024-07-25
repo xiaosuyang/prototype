@@ -28,7 +28,7 @@ set(CMAKE_CXX_STANDARD 14)
 # set (BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
 # find_package(Boost REQUIRED)
 
-include_directories(/usr/local/include/eigen3)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/eigen3)
 
 # find_package(Eigen3 REQUIRED)
 # message("Eigen 库目录" " ${EIGEN3_INCLUDE_DIR}")
