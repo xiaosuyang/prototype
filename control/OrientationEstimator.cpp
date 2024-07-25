@@ -18,7 +18,9 @@ void CheaterOrientationEstimator::run() {
 //   this->_stateEstimatorData.result->rBody = ori::quaternionToRotationMatrix(
 //       this->_stateEstimatorData.result->orientation);//rBody 为世界坐标系到trunk的变换
 
-  this->_stateEstimatorData.result->rBody = RotMat<double>::Identity();
+  this->_stateEstimatorData.result->rBody = Mat33<double>::Identity();
+
+  std::cout << "rbodydef" << this->_stateEstimatorData.result->rBody << '\n';
 
   this->_stateEstimatorData.result->omegaBody(0) =
       this->_stateEstimatorData.lowState->imu.gyroscope[0];

@@ -112,7 +112,7 @@ struct LowlevelState
     float vWorld[3];
     float rpy[3];
     float feetpose[14];
-    float feettwist[12];
+    float feettwist[14];
 
     LowlevelState()
     {

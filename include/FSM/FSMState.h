@@ -18,7 +18,8 @@ class FSMState
         virtual void enter() = 0;
         virtual void run() = 0;
         virtual void exit() = 0;
-        virtual FSMStateName checkTransition() {return FSMStateName::INVALID;}
+        virtual FSMStateName checkTransition();
+
 
         FSMStateName _stateName;
         std::string _stateNameStr;
@@ -30,6 +31,10 @@ class FSMState
         LowlevelCmd *_lowCmd;
         LowlevelState *_lowState;
         UserValue _userValue;
+
+    private:
+        CmdPanel cmdPanel;
+        UserCommand cmd;
 };
 
 #endif // FSMSTATE_H

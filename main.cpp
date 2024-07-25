@@ -47,7 +47,7 @@
 #include "ecrt.h"
 #include "pid_controller.h"
 #include "interface/cmdpanel.h"
-#include "datalogger.h"
+//#include "datalogger.h"
 #include "Eigen/Dense"
 #include "biped.h"
 
@@ -114,11 +114,11 @@ static unsigned int off_bits_0x6000[2] = {1};
 static unsigned int off_bytes_0x6000_1[2] = {1};
 static unsigned int off_bits_0x6000_1[2] = {1};
 
-static unsigned int off_bytes_0x7010[3] = {1};
-static unsigned int off_bits_0x7010[3] = {1};
+static unsigned int off_bytes_0x7010[6] = {1};
+static unsigned int off_bits_0x7010[6] = {1};
 
-static unsigned int off_bytes_0x7011[3] = {1};
-static unsigned int off_bits_0x7011[3] = {1};
+static unsigned int off_bytes_0x7011[6] = {1};
+static unsigned int off_bits_0x7011[6] = {1};
 
 static unsigned int counter = 0;
 
@@ -138,13 +138,16 @@ static uint8_t *domain_pd = NULL;
 
 int fd = -1;
 struct sockaddr_in saddr;
-DataLogger &logger = DataLogger::GET();
+//DataLogger &logger = DataLogger::GET();
 
 LowPassFilter filter;
 
 float Deg[3];
 float KuanDeg[2];
 float rj4angle = 0, rj5angle = 0;
+float LDeg[3];
+float LKuanDeg[2];
+float lj4angle = 0, lj5angle = 0;
 unsigned long SSI[12];
 
 void check_domain_state(void)
@@ -257,52 +260,29 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
     else
     { // do this at 1 Hz
 
-        double LEGlength = bipins.calfLinkLength + bipins.thighLinkLength + bipins.toeLinkLength;
-        Vec6<double> RjQ;
-        Vec3<double> P;
+        // double LEGlength = bipins.calfLinkLength + bipins.thighLinkLength + bipins.toeLinkLength;
+        // Vec6<double> RjQ;
+        // Vec3<double> P;
         // float Deg[3];
         // float KuanDeg[2];
         // float rj4angle=0,rj5angle=0;
-        P.setZero();
-        P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time + 1.5 * M_PI) - 1);
+        // P.setZero();
+        // P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time + 1.5 * M_PI) - 1);
         // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
         // Deg[0] = 1*(14 * sin(0.2 * M_PI * time));
         KuanDeg[0] = 0;
         KuanDeg[1] = 0;
         Deg[0] = 0;
         Deg[1] = 0;
+        rj4angle = 0;
+        rj5angle = 0;
+        LKuanDeg[0] = 0;
+        LKuanDeg[1] = 0;
+        LDeg[0] = 0;
+        LDeg[1] = 0;
+        lj4angle = 0;
+        lj5angle = 0;
 
-        if (time)
-        {
-            // Deg[1]=15*sin(0.2*M_PI*time+1.5*M_PI);
-            // Deg[0]=15*sin(M_PI*time);
-           // KuanDeg[0] = 2.5 * sin(M_PI * time);
-           // rj4angle=-12*sin(M_PI*time);
-           _FSMController->run();
-        //    rj5angle=-10*sin(M_PI*time);
-        }
-
-        //  Deg[2] = 0;
-        // Deg[1] = 0;
-        // Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
-        // Deg[1] = -1 * (Deg[0] + Deg[2])*0;
-        // P(2)*=-1;
-        bipins.ComputeIK(RjQ, P);
-
-
-        // std::cout << "坐标\n"
-        //           << P << '\n';
-        float RJDES[6];
-        RJDES[0] = Deg[0];
-        RJDES[1] = Deg[1];
-        RJDES[2] = KuanDeg[0]; // RJ0
-        // RJDES[2] = 5*sin(0.2 * M_PI * time);//RJ0
-        RJDES[3] = KuanDeg[1]; // RJ1
-        RJDES[4] = rj4angle;          // Rj4
-        RJDES[5] = rj5angle;          // Rj5
-
-        // unsigned long ssi[4];
-        std::vector<unsigned long> ssi;
         for (int i = 0; i < 12; i++)
             SSI[i] = 0;
 
@@ -313,6 +293,46 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         SSI[3] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
         SSI[4] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
         SSI[5] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
+
+        if (time)
+        {
+            // Deg[1]=15*sin(0.2*M_PI*time+1.5*M_PI);
+            // Deg[0]=15*sin(M_PI*time);
+            // KuanDeg[0] = 2.5 * sin(M_PI * time);
+            // rj4angle=-12*sin(M_PI*time);
+            //    _FSMController->run();
+            //    rj5angle=-10*sin(M_PI*time);
+            _FSMController->run();
+        }
+
+        // Deg[2] = 0;
+        // Deg[1] = 0;
+        // Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
+        // Deg[1] = -1 * (Deg[0] + Deg[2])*0;
+        // P(2)*=-1;
+        // bipins.ComputeIK(RjQ, P);
+
+        // std::cout << "坐标\n"
+        //           << P << '\n';
+        float RJDES[6];
+        float LJDES[6];
+        RJDES[0] = Deg[0];
+        RJDES[1] = Deg[1];
+        RJDES[2] = KuanDeg[0]; // RJ0
+        RJDES[3] = KuanDeg[1]; // RJ1
+        RJDES[4] = rj4angle;          // Rj4
+        RJDES[5] = rj5angle;          // Rj5
+
+        LJDES[0] = LDeg[0];
+        LJDES[1] = LDeg[1];
+        LJDES[2] = LKuanDeg[0]; // LJ0
+        LJDES[3] = LKuanDeg[1]; // LJ1
+        LJDES[4] = lj4angle;   // Lj4
+        LJDES[5] = lj5angle;   // Lj5
+
+        // unsigned long ssi[4];
+        // std::vector<unsigned long> ssi;
+
         float *TR_data[12];
         float fSSI[12];
         for (int i = 0; i < 12; i++)
@@ -347,8 +367,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
         // std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
 
-        logger.rj1 = RJDES[3];
-        logger.rj1des = *TR_data[3];
+     
 
         PIDSetpointSet(&PID_ptr_M[0], gang0des);
         PIDInputSet(&PID_ptr_M[0], gang0real); // gang0
@@ -368,7 +387,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // logger.rj1=*TR_data[3];
         //   PID_ptr_M[1].output=-4;
         // std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
-        logger.pidoutput[1] = PID_ptr_M[1].output;
+
 
         float rj2desl = bipins.RJ2convert(RJDES[0]);
         float rj2reall = bipins.RJ2convert(*TR_data[0]);
@@ -418,29 +437,54 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         //   std::cout<<"PID输出"<<PID_ptr_M[3].output<<'\n';
         // logger.pidoutput[3]=PID_ptr_M[3].output;
 
-        for (int i = 0; i < 4; i++)
+        // for (int i = 0; i < 12; i++)
+        // {
+
+        //     output1 = (uint16_t)((PID_ptr_M[i].output + 10) / 20 * 65536);
+
+        //     if (i < 2)
+        //     {
+        //         EC_WRITE_U16(domain_pd + off_bytes_0x7010[i], output1);
+        //         // printf("Current1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7010[i]));
+        //     }
+        //     else
+        //     {
+
+        //         EC_WRITE_U16(domain_pd + off_bytes_0x7011[i - 2], output1);
+        //         // printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i-2]));
+        //     }
+        // }
+        // 定义要赋值给 b 的索引
+        int OutIndex[6] = {0, 1, 5, 6, 7, 11};
+
+        // 创建一个布尔数组来标记 
+        bool is_out_index[12] = {false};
+        for (int i = 0; i < 6; ++i)
         {
+            is_out_index[OutIndex[i]] = true;
+        }
 
-            output1 = (uint16_t)((PID_ptr_M[i].output + 10) / 20 * 65536);
+        int c_idx = 0;
+        int v_idx = 0;
 
-            if (i < 2)
+        for (int i = 0; i < 12; ++i)
+        {
+            output1 = (uint16_t)((PID_ptr_M[i].output+ 10) / 20 * 65536);
+            if (is_out_index[i])
             {
-                EC_WRITE_U16(domain_pd + off_bytes_0x7010[i], output1);
-                // printf("Current1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7010[i]));
+                EC_WRITE_U16(domain_pd + off_bytes_0x7010[c_idx++], output1);
             }
             else
             {
-
-                EC_WRITE_U16(domain_pd + off_bytes_0x7011[i - 2], output1);
-                // printf("Volage1: value=0x%x\n", EC_READ_U16(domain_pd + off_bytes_0x7011[i-2]));
+                EC_WRITE_U16(domain_pd + off_bytes_0x7011[v_idx++], output1);
             }
         }
-       
-        output1 = (uint16_t)((PID_ptr_M[4].output+ 10) / 20 * 65536);
-        EC_WRITE_U16(domain_pd + off_bytes_0x7011[2], output1);
 
-        output1 = (uint16_t)((PID_ptr_M[5].output + 10) / 20 * 65536);
-        EC_WRITE_U16(domain_pd + off_bytes_0x7010[2], output1);
+        // output1 = (uint16_t)((PID_ptr_M[4].output+ 10) / 20 * 65536);
+        // EC_WRITE_U16(domain_pd + off_bytes_0x7011[2], output1);
+
+        // output1 = (uint16_t)((PID_ptr_M[5].output + 10) / 20 * 65536);
+        // EC_WRITE_U16(domain_pd + off_bytes_0x7010[2], output1);
         counter = 0;
 
         std::cout << "-------------------\n";
@@ -448,11 +492,14 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // logger.Savedata();
 
         char sendBuf[128];
+        
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0],*TR_data[0],*TR_data[2],*TR_data[3],
         // PID_ptr_M[2].alteredKp,PID_ptr_M[2].dispKi,rj2desl,PID_ptr_M[2].FF,PID_ptr_M[2].output);
 
-        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[5], *TR_data[4], *TR_data[5],
-                PID_ptr_M[4].output, PID_ptr_M[5].output, L4real, L5real,Deg[0],Deg[1]);
+        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[5], *TR_data[4], *TR_data[5],
+        //         PID_ptr_M[4].output, PID_ptr_M[5].output, L4real, L5real,Deg[0],Deg[1],Deg[2]);
+
+        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", KuanDeg[0], KuanDeg[1], Deg[0], Deg[1], rj4angle, rj5angle, LKuanDeg[0], LKuanDeg[1], LDeg[0], LDeg[1], lj4angle, lj5angle,Deg[2],LDeg[2]);
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
     }
@@ -500,8 +547,8 @@ int main(int argc, char **argv)
     //control设置
     double dt = 0.001;
     Biped robot;
-    CheatIO* IOptr = new CheatIO("biped");
-    LegController* Legctrlptr = new LegController(robot);
+    CheatIO *IOptr = new CheatIO("biped");
+    LegController *Legctrlptr = new LegController(robot);
     LowlevelCmd *cmd = new LowlevelCmd();
     LowlevelState *state = new LowlevelState();
     StateEstimate stateEstimate;
@@ -512,7 +559,7 @@ int main(int argc, char **argv)
     stateEstimator->addEstimator<CheaterOrientationEstimator>();
     stateEstimator->addEstimator<CheaterPositionVelocityEstimator>();
 
-
+    
     DesiredStateCommand* desiredStateCommand = new DesiredStateCommand(&stateEstimate, dt);
 
 
@@ -661,6 +708,30 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    off_bytes_0x7010[3] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 4, domain, &off_bits_0x7010[3]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[3], off_bits_0x7010[3]);
+    if (off_bytes_0x7010[3] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7010[4] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 5, domain, &off_bits_0x7010[4]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[4], off_bits_0x7010[4]);
+    if (off_bytes_0x7010[4] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7010[5] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 6, domain, &off_bits_0x7010[5]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[5], off_bits_0x7010[5]);
+    if (off_bytes_0x7010[5] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
     off_bytes_0x7011[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 1, domain, &off_bits_0x7011[0]);
     printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[0], off_bits_0x7011[0]);
     if (off_bytes_0x7011[0] < 0)
@@ -680,6 +751,30 @@ int main(int argc, char **argv)
     off_bytes_0x7011[2] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 3, domain, &off_bits_0x7011[2]);
     printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[2], off_bits_0x7011[2]);
     if (off_bytes_0x7011[2] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7011[3] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 4, domain, &off_bits_0x7011[3]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[3], off_bits_0x7011[3]);
+    if (off_bytes_0x7011[3] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7011[4] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 5, domain, &off_bits_0x7011[4]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[4], off_bits_0x7011[4]);
+    if (off_bytes_0x7011[4] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7011[5] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7011, 6, domain, &off_bits_0x7011[5]);
+    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7011[5], off_bits_0x7011[5]);
+    if (off_bytes_0x7011[5] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
@@ -737,19 +832,44 @@ int main(int argc, char **argv)
     /*
    PIDK: 0.065,0.024,0,-0.02
    */
-    PIDInit(&PID_ptr_M[2], 0.065, 0.024, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);   
+    PIDInit(&PID_ptr_M[2], 0.065, 0.024, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
     /*
     PIDK: 0.06,0.004,0,0.0811
     */
     PIDInit(&PID_ptr_M[3], 0.06, 0.004, 0, 0.08, controltime, -10, 10, AUTOMATIC, REVERSE);
-   /*
-    PIDK: 0.4,0,0,0.02
-    */
+    /*
+     PIDK: 0.4,0,0,0.02
+     */
     PIDInit(&PID_ptr_M[4], 0.4, 0, 0, 0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
-       /*
+    /*
     PIDK: 1.0,0.08,0,0.1
     */
     PIDInit(&PID_ptr_M[5], 1, 0.08, 0, 0.1, controltime, -10, 10, AUTOMATIC, DIRECT);
+
+    /*
+    PIDK: 0.8,0.2,0,-0.1
+    */
+    PIDInit(&PID_ptr_M[6], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    // PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
+
+    PIDInit(&PID_ptr_M[7], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+    /*
+    PIDK: 0.065,0.024,0,-0.02
+   */
+    PIDInit(&PID_ptr_M[8], 0.065, 0.024, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    /*
+    PIDK: 0.06,0.004,0,0.0811
+    */
+    PIDInit(&PID_ptr_M[9], 0.06, 0.004, 0, 0.08, controltime, -10, 10, AUTOMATIC, REVERSE);
+    /*
+    PIDK: 0.4,0,0,0.02
+    */
+    PIDInit(&PID_ptr_M[10], 0.4, 0, 0, 0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    /*
+    PIDK: 1.0,0.08,0,0.1
+    */
+    PIDInit(&PID_ptr_M[11], 1, 0.08, 0, 0.1, controltime, -10, 10, AUTOMATIC, DIRECT);
 
     printf("Started.\n");
 
@@ -766,6 +886,7 @@ int main(int argc, char **argv)
             else
                 time = 0;
 
+            // cyclic_task(bipedinstance, time, NULL);
             cyclic_task(bipedinstance, time, _FSMController);
             user_alarms++;
         }

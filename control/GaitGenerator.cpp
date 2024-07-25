@@ -7,7 +7,7 @@ Gait::Gait(int nMPC_segments, Vec2<int> offsets, Vec2<int> durations, const std:
                                                                                                  _durations(durations.array()),
                                                                                                  _nIterations(nMPC_segments)
 {
-  _mpc_table = new int[nMPC_segments * 2];
+  _mpc_table = new int[10 * 2];
   _offsetsPhase = offsets.cast<double>() / (double)nMPC_segments;     
   _durationsPhase = durations.cast<double>() / (double)nMPC_segments; 
   _stance = durations[0];                

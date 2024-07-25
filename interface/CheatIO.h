@@ -19,6 +19,10 @@ class CheatIO : public IOInterface
     private:
         // void sendCmd(const LowlevelCmd *cmd);
         void recvState(LowlevelState *state);
+        // double Initialq[12]={0,0,-0.338,0.7616,-0.425,0,0,0,-0.338,0.7616,-0.425,0};
+
+        double Initialq[12]={0,0,-0.338,0.7616,-0.425,0,0,0,-0.338,0.7616,-0.425,0};
+
         // void recvfeetState(LowlevelState *state);
         // ros::NodeHandle _nm;
         // ros::Subscriber _servo_sub[12], _state_sub,linkstate_sub;

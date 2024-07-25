@@ -26,19 +26,19 @@ public:
         calfLinkLength = 0.37;
         toeLinkLength = 0.098;
 
-        axis.push_back(Vec3<double>(0,0,1));
-        axis.push_back(Vec3<double>(1,0,0));
-        axis.push_back(Vec3<double>(0,1,0));
-        axis.push_back(Vec3<double>(0,1,0));
-        axis.push_back(Vec3<double>(0,1,0));
-        axis.push_back(Vec3<double>(1,0,0));
+        axis[0] = Vec3<double>(0, 0, 1);
+        axis[1] = Vec3<double>(1, 0, 0);
+        axis[2] = Vec3<double>(0, 1, 0);
+        axis[3] = Vec3<double>(0, 1, 0);
+        axis[4] = Vec3<double>(0, 1, 0);
+        axis[5] = Vec3<double>(1, 0, 0);
 
-        axisname.push_back(ori::CoordinateAxis::Z);
-        axisname.push_back(ori::CoordinateAxis::X);
-        axisname.push_back(ori::CoordinateAxis::Y);
-        axisname.push_back(ori::CoordinateAxis::Y);
-        axisname.push_back(ori::CoordinateAxis::Y);
-        axisname.push_back(ori::CoordinateAxis::X);
+        axisname[0] = ori::CoordinateAxis::Z;
+        axisname[1] = ori::CoordinateAxis::X;
+        axisname[2] = ori::CoordinateAxis::Y;
+        axisname[3] = ori::CoordinateAxis::Y;
+        axisname[4] = ori::CoordinateAxis::Y;
+        axisname[5] = ori::CoordinateAxis::X;
     }
     double toeLinkLength;
     double thighLinkLength;
@@ -48,8 +48,8 @@ public:
     double leg_offset_z;
     double mass;
     double waistwidth;
-    std::vector<Vec3<double>> axis;
-    std::vector<ori::CoordinateAxis> axisname;
+    Vec3<double> axis[6];
+    ori::CoordinateAxis axisname[6];
     // std::array<double,6> Initialq{0,0,-0.338,0.7616,-0.425,0};
     double Initialq[6]={0,0,-0.338,0.7616,-0.425,0};
     template <typename T>
@@ -143,8 +143,8 @@ public:
         pbiped << _biped.leg_offset_x, side * _biped.leg_offset_y, _biped.leg_offset_z; // trt0
         Vec3<double> r;
         r = *p - pbiped;
-        std::cout << "IKinbodyframe,r:\n"
-                  << r << '\n';
+        // std::cout << "IKinbodyframe,r:\n"
+        //           << r << '\n';
         ComputeIK(q, r, R);
     }
 

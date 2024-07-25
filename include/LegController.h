@@ -29,7 +29,7 @@ SOFTWARE.
 #include "utility/cppTypes.h"
 #include "math/orientation_tools.h"
 #include "biped.h"
-#include <array>
+// #include <array>
 #include "../interface/LowlevelState.h"
 #include "../interface/LowLevelCmd.h"
 
@@ -75,8 +75,9 @@ SOFTWARE.
       public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         LegController(Biped& biped) : _biped(biped) {
-            for (auto& dat : data) dat.setBiped(_biped);
+            // for (auto& dat : data) dat.setBiped(_biped);
             for(int i = 0; i < 2; i++){
+                data[i].setBiped(_biped);
                 commands[i].zero();
                 data[i].zero();
                 Feetpose[i].resize(7,1);
@@ -90,8 +91,8 @@ SOFTWARE.
         void setEnabled(bool enabled) {_legsEnabled = enabled;};
         void updatePosctrl(LowlevelCmd* cmd);
         void updateTorque(LowlevelCmd* cmd,const Vec6<double>& Rt,const Vec6<double>& Lt);
-        std::array<Vec6<double>,2> Feettwist;
-        std::array<Eigen::VectorXd,2> Feetpose;
+        Vec6<double> Feettwist[2];
+        Eigen::VectorXd Feetpose[2];
        
         LegControllerCommand commands[2];
         //data:从ros读到的关节数据

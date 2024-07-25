@@ -6,7 +6,8 @@ FSM::FSM(ControlFSMData *data)
     :_data(data)
 {
     //  MPChandle=std::make_unique<ConvexMPCLocomotion>(0.001,40);
-    _stateList.invalid = nullptr;
+    // _stateList.invalid = nullptr;
+    _stateList.invalid = NULL;
     // _stateList.stand=nullptr;
     // _stateList.debuging=nullptr;
     // _stateList.passive = new FSMState_Passive(_data);
@@ -45,7 +46,7 @@ void FSM::run()
         _nextStateName = _currentState->checkTransition();
         if(_nextStateName != _currentState->_stateName)
         {
-            _mode = FSMMode::CHANGE;
+            // _mode = FSMMode::CHANGE;
             _nextState = getNextState(_nextStateName);
         }
     }
@@ -66,7 +67,8 @@ FSMState* FSM::getNextState(FSMStateName stateName)
 {
     switch(stateName)
     {
-        case FSMStateName::INVALID:
+        // case FSMStateName::INVALID:
+        case INVALID:
             return _stateList.invalid;
         break;
         // case FSMStateName::PASSIVE:
@@ -74,7 +76,8 @@ FSMState* FSM::getNextState(FSMStateName stateName)
         // break;
         // case FSMStateName::WALKING:
         //     return _stateList.walking;
-        case FSMStateName::DEBUG:
+        // case FSMStateName::DEBUG:
+        case DEBUG:
             return _stateList.debuging;
         break;
         default:

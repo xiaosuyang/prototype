@@ -108,6 +108,7 @@ void* KeyBoard::run(void *arg){
         if(res > 0){
             read( fileno( stdin ), &_c, 1 );
             userCmd = checkCmd();
+            //  std::cout << userCmd << std::endl;
             if(userCmd == NONE)
                 changeValue();
             _c = '\0';

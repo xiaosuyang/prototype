@@ -15,6 +15,8 @@ class CheaterRobotStateEstimator: public GenericEstimator{
 
             this->_stateEstimatorData.result->rBody = ori::quaternionToRotationMatrix(
                 this->_stateEstimatorData.result->orientation);
+
+            // this->_stateEstimatorData.result->rBody = Mat33<double>::Identity();
             // when wrting to this variable, we write the world frame omega into it instead of IMU reading
             this->_stateEstimatorData.result->omegaWorld[0] = this->_stateEstimatorData.lowState->imu.gyroscope[0];
             this->_stateEstimatorData.result->omegaWorld[1] = this->_stateEstimatorData.lowState->imu.gyroscope[1];

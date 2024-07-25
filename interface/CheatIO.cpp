@@ -3,6 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <csignal>
+// #include "../include/biped.h"
 
 
 
@@ -73,7 +74,7 @@ void CheatIO::recvState(LowlevelState *state)
         // state->motorState[i].q = _highState.motorState[i].q;
         // state->motorState[i].dq = _highState.motorState[i].dq;
         // state->motorState[i].tauEst = _highState.motorState[i].tauEst;
-        state->motorState[i].q = (float)SSI[i];
+        state->motorState[i].q = (float)SSI[i]+Initialq[i];
         state->motorState[i].dq = 0;
         state->motorState[i].tauEst = 0;
     }
@@ -86,7 +87,7 @@ void CheatIO::recvState(LowlevelState *state)
         state->vWorld[i] = 0;
     }
     // state->imu.quaternion[3] = _highState.imu.quaternion[3];
-    state->position[2] = 0.894;
+    state->position[2] = 0;
     // recvfeetState(state);
 }
 

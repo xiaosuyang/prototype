@@ -80,7 +80,8 @@ class GenericEstimator{
 
     void setData(StateEstimatorData data) {_stateEstimatorData = data;};
 
-    virtual ~GenericEstimator() = default;
+    // virtual ~GenericEstimator() = default;
+    virtual ~GenericEstimator(){};
     StateEstimatorData _stateEstimatorData;
 };
 
@@ -101,14 +102,34 @@ class StateEstimatorContainer {
     }
     // deconstructor
     ~StateEstimatorContainer() {
-        for (auto estimator : _estimators) {
-            delete estimator;
+        // for (auto estimator : _estimators) {
+        //     delete estimator;
+        // }
+        int i = 0;
+        while (i < 10)
+        {
+            // if (_estimators[i] != nullptr)
+            if (_estimators[i] != NULL)
+            {
+                delete _estimators[i];
+                // _estimators[i] = nullptr;
+                _estimators[i] = NULL;
+            }
+            i++;
         }
     }
     // run estimator
-    void run(){
-        for (auto estimator : _estimators){
-            estimator->run();
+    void run()
+    {
+        int i = 0;
+        while (i < 10)
+        {
+            // if (_estimators[i] != nullptr)
+            if (_estimators[i] != NULL)
+            {
+                _estimators[i]->run();
+            }
+            i++;
         }
     }
 
@@ -119,39 +140,40 @@ class StateEstimatorContainer {
     template <typename EstimatorToAdd>
     void addEstimator(){
         std::cout << "add estimator" << std::endl;
-        auto* estimator = new EstimatorToAdd();
+        GenericEstimator* estimator = new EstimatorToAdd();
         estimator->setData(_data);
         estimator->setup();
-        _estimators.push_back(estimator);
+        estimator->run();
+        // _estimators.push_back(estimator);
     }
 
     // remove estimator of given type
-    template <typename EstimatorToRemove>
-    void removeEstimator() {
-        int nRemoved = 0;
-        _estimators.erase(
-            std::remove_if(_estimators.begin(), _estimators.end(),
-                           [&nRemoved](GenericEstimator* e){
-                               if (dynamic_cast<EstimatorToRemove*>(e)){
-                                   delete e;
-                                   nRemoved++;
-                                   return true;
-                                } else {
-                                    return false;
-                                }
-                           }),
-            _estimators.end());
-    }
+    // template <typename EstimatorToRemove>
+    // void removeEstimator() {
+    //     int nRemoved = 0;
+    //     _estimators.erase(
+    //         std::remove_if(_estimators.begin(), _estimators.end(),
+    //                        [&nRemoved](GenericEstimator* e){
+    //                            if (dynamic_cast<EstimatorToRemove*>(e)){
+    //                                delete e;
+    //                                nRemoved++;
+    //                                return true;
+    //                             } else {
+    //                                 return false;
+    //                             }
+    //                        }),
+    //         _estimators.end());
+    // }
 
-    // remove all estimators
-    void removeAllEstimators() {
-        for (auto estimator : _estimators) {
-            delete estimator;
-        }
-        _estimators.clear();
-    }
+    // // remove all estimators
+    // void removeAllEstimators() {
+    //     for (auto estimator : _estimators) {
+    //         delete estimator;
+    //     }
+    //     _estimators.clear();
+    // }
   private:
-    std::vector<GenericEstimator*> _estimators;
+    GenericEstimator* _estimators[10];
     Vec4<double> _phase;
     StateEstimatorData _data;
 };

@@ -24,7 +24,8 @@ enum FSMMode{
     CHANGE
 };
 
-enum class FSMStateName{
+// enum class FSMStateName{
+enum  FSMStateName{
     // EXIT,
     INVALID,
     PASSIVE,

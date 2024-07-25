@@ -12,10 +12,10 @@ class FSMState_Debug: public FSMState
         void enter(){}
         void run();
         void exit() {}
-        FSMStateName checkTransition()
-        {
-            return FSMStateName::DEBUG;
-        }
+        // FSMStateName checkTransition()
+        // {
+        //     return DEBUG;
+        // }
     private:
         Checkjoint runobject;
 

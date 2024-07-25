@@ -9,7 +9,7 @@
 class FSMState_PStand : public FSMState
 {
 public:
-  FSMState_PStand(ControlFSMData *data) : FSMState(data, FSMStateName::PDSTAND, "Pstand")
+  FSMState_PStand(ControlFSMData *data) : FSMState(data, PDSTAND, "Pstand")
   {
     Kp << 10, 0, 0,
         0, 10, 0,
@@ -29,7 +29,7 @@ public:
   }
   FSMStateName checkTransition()
   {
-    return FSMStateName::PDSTAND;
+    return PDSTAND;
   }
 
   //  ConvexMPCLocomotion Cmpc;

@@ -109,70 +109,70 @@ void LegController::updatePosctrl(LowlevelCmd* cmd)
 
 void LegController::updateCommand(LowlevelCmd* cmd){
 
-    std::array<std::vector<double>,2> qKp,qKd;
-    qKp[0].assign(6,0);
-    qKp[1].assign(6,0);
-    qKd[0].assign(6,0);
-    qKd[1].assign(6,0);
-    for(int i=0;i<2;i++)
-    {
-        Vec6<double> footForce = commands[i].feedforwardForce;
-        Vec6<double> legtau = data[i].J_force_moment.transpose() * footForce; // force moment from stance leg
-        for(int j = 0; j < 6; j++){
-            std::cout << "legtau" << j << ": "<< legtau(j) << std::endl;
-        }
+    // std::array<std::vector<double>,2> qKp,qKd;
+    // qKp[0].assign(6,0);
+    // qKp[1].assign(6,0);
+    // qKd[0].assign(6,0);
+    // qKd[1].assign(6,0);
+    // for(int i=0;i<2;i++)
+    // {
+    //     Vec6<double> footForce = commands[i].feedforwardForce;
+    //     Vec6<double> legtau = data[i].J_force_moment.transpose() * footForce; // force moment from stance leg
+    //     for(int j = 0; j < 6; j++){
+    //         std::cout << "legtau" << j << ": "<< legtau(j) << std::endl;
+    //     }
        
-        if(commands[i].kpCartesian(0,0) != 0 || commands[i].kdCartesian(0,0) != 0)//摆动项
-        {
-             Vec3<double> footForce_3d = commands[i].kpCartesian * (commands[i].pDes - data[i].p) +
-                                        commands[i].kdCartesian * (commands[i].vDes - data[i].v);
+    //     if(commands[i].kpCartesian(0,0) != 0 || commands[i].kdCartesian(0,0) != 0)//摆动项
+    //     {
+    //          Vec3<double> footForce_3d = commands[i].kpCartesian * (commands[i].pDes - data[i].p) +
+    //                                     commands[i].kdCartesian * (commands[i].vDes - data[i].v);
 
-            Vec6<double> swingtau=data[i].J_force.transpose()*footForce_3d;
-            double kphip1 = 3;
-            double kdhip1 = 0.3;
+    //         Vec6<double> swingtau=data[i].J_force.transpose()*footForce_3d;
+    //         double kphip1 = 3;
+    //         double kdhip1 = 0.3;
           
-            commands[i].kdtoe=0.1;
-            swingtau(0) = kphip1*(0-data[i].q(0)) + kdhip1*(0-data[i].qd(0));
-            swingtau(4) = commands[i].kptoe * (-data[i].q(3)-data[i].q(2)-data[i].q(4))+commands[i].kdtoe*(0-data[i].qd(4));
+    //         commands[i].kdtoe=0.1;
+    //         swingtau(0) = kphip1*(0-data[i].q(0)) + kdhip1*(0-data[i].qd(0));
+    //         swingtau(4) = commands[i].kptoe * (-data[i].q(3)-data[i].q(2)-data[i].q(4))+commands[i].kdtoe*(0-data[i].qd(4));
           
                    
-            for(int j = 0; j < 6; j++)
-            {
-                legtau(j) += swingtau(j);
-            }
+    //         for(int j = 0; j < 6; j++)
+    //         {
+    //             legtau(j) += swingtau(j);
+    //         }
 
-            for(int j=0;j<6;j++) commands[i].qDes[j]-=_biped.Initialq[j];
+    //         for(int j=0;j<6;j++) commands[i].qDes[j]-=_biped.Initialq[j];
 
-            qKp[i][0]=50;
-            qKp[i][1]=50;
-            qKp[i][2]=50;
-            qKp[i][3]=50;
-            qKp[i][4]=50;
-            qKp[i][5]=5;
+    //         qKp[i][0]=50;
+    //         qKp[i][1]=50;
+    //         qKp[i][2]=50;
+    //         qKp[i][3]=50;
+    //         qKp[i][4]=50;
+    //         qKp[i][5]=5;
             
-            qKd[i][0]=1;
-            qKd[i][1]=1;
-            qKd[i][2]=1;
-            qKd[i][3]=1;
-            qKd[i][4]=1;
-            qKd[i][5]=0.5;
+    //         qKd[i][0]=1;
+    //         qKd[i][1]=1;
+    //         qKd[i][2]=1;
+    //         qKd[i][3]=1;
+    //         qKd[i][4]=1;
+    //         qKd[i][5]=0.5;
 
-        }
+    //     }
 
-        commands[i].tau += legtau;
+    //     commands[i].tau += legtau;
 
-        for (int j = 0; j < 6; j++){
-            cmd->motorCmd[i*6+j].tau =commands[i].tau(j);
-            cmd->motorCmd[i*6+j].q = commands[i].qDes(j);
-            cmd->motorCmd[i*6+j].dq = commands[i].qdDes(j);
-            cmd->motorCmd[i*6+j].Kp = qKp[i].at(j);
-            cmd->motorCmd[i*6+j].Kd = qKd[i].at(j);
-           // std::cout << Side[i] << " " << limbName[j] <<" torque cmd  =  " << cmd->motorCmd[i*5+j].tau << std::endl;            
-        }
+    //     for (int j = 0; j < 6; j++){
+    //         cmd->motorCmd[i*6+j].tau =commands[i].tau(j);
+    //         cmd->motorCmd[i*6+j].q = commands[i].qDes(j);
+    //         cmd->motorCmd[i*6+j].dq = commands[i].qdDes(j);
+    //         cmd->motorCmd[i*6+j].Kp = qKp[i].at(j);
+    //         cmd->motorCmd[i*6+j].Kd = qKd[i].at(j);
+    //        // std::cout << Side[i] << " " << limbName[j] <<" torque cmd  =  " << cmd->motorCmd[i*5+j].tau << std::endl;            
+    //     }
 
-        commands[i].tau << 0, 0, 0, 0, 0,0; // zero torque command to prevent interference
+    //     commands[i].tau << 0, 0, 0, 0, 0,0; // zero torque command to prevent interference
 
-    }
+    // }
 
    
 }
@@ -252,8 +252,8 @@ void computeLegJacobianAndPosition(Biped& _biped, Vec6<double>& q, Mat66<double>
 
     // for(int i=0;i<6;i++) q[i]+=_biped.Initialq[i];
 
-    std::array<Vec3<double>,6> axis_body;
-    std::array<Vec3<double>,6> r_body;
+    Vec3<double> axis_body[6];
+    Vec3<double> r_body[6];
     Vec3<double> pbiped;
 
     r_body[0]<<0,0,0; //0r01
@@ -341,6 +341,7 @@ void computeIK(Biped& _biped,Vec6<double>&q,Vec3<double>* p,int leg,Mat33<double
     pbiped<<_biped.leg_offset_x,side*_biped.leg_offset_y,_biped.leg_offset_z;//trt0
     Vec3<double> r;
     r=*p-pbiped;
-    std::cout<<"IKinbodyframe,r:\n"<<r<<'\n';
+    // std::cout<<"IKinbodyframe,r:\n"<<r<<'\n';
     computeIK(_biped,q,&r,leg,R);
+    std::cout<<"关节角度q"<<leg<<":\n"<<q<<'\n';
  }

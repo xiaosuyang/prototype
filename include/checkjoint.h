@@ -1,7 +1,7 @@
 
 #ifndef CHECK_JOINT_H
 #define CHECK_JOINT_H
-#include <vector>
+// #include <vector>
 #include <iostream>
 #include <memory>
 #include <cmath>
@@ -17,8 +17,11 @@
 extern float Deg[3];
 extern float KuanDeg[2];
 extern float rj4angle, rj5angle;
+extern float LDeg[3];
+extern float LKuanDeg[2];
+extern float lj4angle, lj5angle;
 
-enum class JOINT
+enum JOINT
 {
     RJ0,
     RJ1,
@@ -38,7 +41,8 @@ enum class JOINT
 class Checkjoint
 {
 public:
-    Checkjoint() = default;
+    // Checkjoint() = default;
+    Checkjoint(){};
     Checkjoint(IOInterface* io,LegController* ctrl,LowlevelCmd* cmdex,LowlevelState* statex,
     StateEstimatorContainer* esptr) : ioptr(io),statectrl(ctrl),_stateEstimator(esptr)
     {
@@ -57,9 +61,10 @@ public:
     }
     ~Checkjoint()
     {
-        _lowCmd=nullptr;
-        _lowState=nullptr;
-
+        // _lowCmd=nullptr;
+        // _lowState=nullptr;
+        _lowCmd = NULL;
+        _lowState = NULL;
     }
     void checkgait();
 
@@ -87,7 +92,8 @@ public:
         statectrl->updateData(_lowState);
         float q,v,qmax=1.57,dq,dqdes;
         v=qmax/2;
-        if(joint<=static_cast<unsigned short>(JOINT::RJ5)) 
+        // if(joint<=static_cast<unsigned short>(JOINT::RJ5)) 
+        if(joint<=static_cast<unsigned short>(RJ5)) 
         {
             q=statectrl->data[0].q(joint);
             dq=statectrl->data[0].qd(joint);
@@ -106,7 +112,8 @@ public:
             qdes+=up*0.005;
         }
 
-         if(joint<=static_cast<unsigned short>(JOINT::RJ5)) 
+        //  if(joint<=static_cast<unsigned short>(JOINT::RJ5)) 
+         if(joint<=static_cast<unsigned short>(RJ5)) 
          {
             statectrl->commands[0].qDes(joint)=qdes;
             statectrl->commands[0].qdDes(joint)=dqdes;
@@ -146,7 +153,7 @@ public:
     LegController* statectrl;
     IOInterface* ioptr;
     Vec2<double> swingTimes;
-    std::array<Vec3<float>,2> Footpos;
+    Vec3<float> Footpos[2];
     StateEstimatorContainer* _stateEstimator;
     Vec3<double> pDesFootWorld[2] ;
     Vec3<double> vDesFootWorld[2] ;

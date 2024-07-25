@@ -15,8 +15,8 @@
  */
 template <typename T>
 void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime) {
-  _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
-  _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _pf, phase);
+  _p = Interpolate::cubicBezier<Vec3<T> >(_p0, _pf, phase);
+  _v = Interpolate::cubicBezierFirstDerivative<Vec3<T> >(_p0, _pf, phase);
 
   T zp, zv;
 

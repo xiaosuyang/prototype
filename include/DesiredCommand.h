@@ -7,6 +7,9 @@
 #ifndef DESIREDCOMMAND_H
 #define DESIREDCOMMAND_H
 
+#include "Eigen/Dense"
+#include "Eigen/Core"
+
 #include "cppTypes.h"
 #include <signal.h>
 #include <stdio.h>
@@ -14,18 +17,21 @@
 #include "StateEstimatorContainer.h"
 #include "../interface/cmdpanel.h"
 
+
+
 struct DesiredStateData{
+  DesiredStateData() { zero(); }
 
-    DesiredStateData() { zero(); }
+  // Zero all data
+  void zero();
 
-    // Zero all data
-    void zero();
+  // Instataneous desired state comman
+  // Vec12<double> stateDes;
+  // Vec12<double> pre_stateDes;
+  Eigen::Matrix<double, 12, 1> stateDes;
+  Eigen::Matrix<double, 12, 1> pre_stateDes;
 
-    // Instataneous desired state comman
-    Vec12<double> stateDes;
-    Vec12<double> pre_stateDes;
-
-    int mode;
+  int mode;
 };
 
 class DesiredStateCommand {
@@ -57,7 +63,7 @@ class DesiredStateCommand {
     double minTurnRate = -2.0;
     DesiredStateData data;
 
-    //~DesiredStateCommand();
+    ~DesiredStateCommand();
   private:
     StateEstimate* stateEstimate;
 

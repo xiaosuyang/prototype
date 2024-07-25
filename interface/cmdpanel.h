@@ -47,6 +47,10 @@ class CmdPanel{
 public:
     CmdPanel(){}
     ~CmdPanel(){}
+    UserCommand getUserCmd() const
+    {
+        return userCmd;
+    }
     UserValue uservalue;
 
 protected:

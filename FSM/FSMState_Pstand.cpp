@@ -26,7 +26,7 @@ void FSMState_PStand::run()
     _data->_legController->updateData(_data->_lowState);
     _data->_stateEstimator->run();
 
-    auto &seResult = _data->_stateEstimator->getResult();
+    const StateEstimate &seResult = _data->_stateEstimator->getResult();
     world_position = seResult.position;
     // world_foot_position_desired=world_position-Vec3<double>(0,0,1.12);
     for (int foot = 0; foot < 2; foot++)

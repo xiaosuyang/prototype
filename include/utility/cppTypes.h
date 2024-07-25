@@ -8,7 +8,7 @@
 #ifndef PROJECT_CPPTYPES_H
 #define PROJECT_CPPTYPES_H
 
-#include <vector>
+// #include <vector>
 #include "cTypes.h"
 #include <Eigen/Dense>
 
@@ -160,9 +160,10 @@ template<typename T>
 using Isometry3 = typename Eigen::Transform<T, 3, Eigen::Isometry>;
 
 // std::vector (a list) of Eigen things
-template <typename T>
-using vectorAligned = typename std::vector<T, Eigen::aligned_allocator<T>>;
+// template <typename T>
+// using vectorAligned = typename std::vector<T, Eigen::aligned_allocator<T>>;
 
-enum class RobotType { CHEETAH_3, MINI_CHEETAH, WHEEL_LEG };
+// enum class RobotType { CHEETAH_3, MINI_CHEETAH, WHEEL_LEG };
+enum  RobotType { CHEETAH_3, MINI_CHEETAH, WHEEL_LEG };
 
 #endif  // PROJECT_CPPTYPES_H
