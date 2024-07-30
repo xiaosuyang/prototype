@@ -93,6 +93,19 @@ static ec_slave_config_state_t sc2_ana_in_state = {};
 static ec_slave_config_t *sc3;
 static ec_slave_config_state_t sc3_ana_in_state = {};
 
+static ec_slave_config_t *sc4;
+static ec_slave_config_state_t sc4_ana_in_state = {};
+
+static ec_slave_config_t *sc5;
+static ec_slave_config_state_t sc5_ana_in_state = {};
+
+static ec_slave_config_t *sc6;
+static ec_slave_config_state_t sc6_ana_in_state = {};
+
+static ec_slave_config_t *sc7;
+static ec_slave_config_state_t sc7_ana_in_state = {};
+
+
 static CmdPanel *cmdptr = NULL;
 // Timer
 static unsigned int sig_alarms = 0;
@@ -114,6 +127,23 @@ static unsigned int off_bits_0x6000[2] = {1};
 static unsigned int off_bytes_0x6000_1[2] = {1};
 static unsigned int off_bits_0x6000_1[2] = {1};
 
+static unsigned int off_bytes_0x6000_2[2] = {1};
+static unsigned int off_bits_0x6000_2[2] = {1};
+
+static unsigned int off_bytes_0x6000_3[2] = {1};
+static unsigned int off_bits_0x6000_3[2] = {1};
+
+static unsigned int off_bytes_0x6000_4[2] = {1};
+static unsigned int off_bits_0x6000_4[2] = {1};
+
+static unsigned int off_bytes_0x6000_5[2] = {1};
+static unsigned int off_bits_0x6000_5[2] = {1};
+
+
+
+
+
+
 static unsigned int off_bytes_0x7010[6] = {1};
 static unsigned int off_bits_0x7010[6] = {1};
 
@@ -127,11 +157,18 @@ static uint8_t *domain_pd = NULL;
 
 #define BusCouplerPos1 0, 0
 
-#define BusCouplerPos2 0, 2
+#define BusCouplerPos2 256, 1
 
-#define BusCouplerPos3 0, 1
+#define BusCouplerPos3 256, 0
+
+#define BusCouplerPos4 256, 2
+
+#define BusCouplerPos5 256, 3
+#define BusCouplerPos6 256, 4
+#define BusCouplerPos7 256, 5
 
 #define TI_AM3359ICE 0x01222222, 0x00020310
+#define TI_AM3359ICE1 0x00000b95, 0x00020310
 #define Valve 0x00000b95, 0x00020130
 
 #include "cstruct.h"
@@ -287,12 +324,21 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             SSI[i] = 0;
 
         uint16_t output1 = 0;
-        SSI[0] = EC_READ_U32(domain_pd + off_bytes_0x6000[0]);
+        SSI[0] = EC_READ_U32(domain_pd + off_bytes_0x6000[0]);//rj0
         SSI[1] = EC_READ_U32(domain_pd + off_bytes_0x6000[1]);
         SSI[2] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
         SSI[3] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
-        SSI[4] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[0]);
-        SSI[5] = EC_READ_U32(domain_pd + off_bytes_0x6000_1[1]);
+        SSI[4] = EC_READ_U32(domain_pd + off_bytes_0x6000_2[0]);
+        SSI[5] = EC_READ_U32(domain_pd + off_bytes_0x6000_2[1]);
+        SSI[6] = EC_READ_U32(domain_pd + off_bytes_0x6000_3[0]);//lj0
+        SSI[7] = EC_READ_U32(domain_pd + off_bytes_0x6000_3[1]);
+        SSI[8] = EC_READ_U32(domain_pd + off_bytes_0x6000_4[0]);
+        SSI[9] = EC_READ_U32(domain_pd + off_bytes_0x6000_4[1]);
+        SSI[10] = EC_READ_U32(domain_pd + off_bytes_0x6000_5[0]);
+        SSI[11] = EC_READ_U32(domain_pd + off_bytes_0x6000_5[1]);
+     
+        // for (int i = 0; i < 12; i++)
+        //    std::cout<<"编码器"<<i<< SSI[i] <<'\n';
 
         if (time)
         {
@@ -302,7 +348,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             // rj4angle=-12*sin(M_PI*time);
             //    _FSMController->run();
             //    rj5angle=-10*sin(M_PI*time);
-            _FSMController->run();
+          //  _FSMController->run();
         }
 
         // Deg[2] = 0;
@@ -314,6 +360,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         // std::cout << "坐标\n"
         //           << P << '\n';
+        
         float RJDES[6];
         float LJDES[6];
         RJDES[0] = Deg[0];
@@ -323,10 +370,10 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         RJDES[4] = rj4angle;          // Rj4
         RJDES[5] = rj5angle;          // Rj5
 
-        LJDES[0] = LDeg[0];
-        LJDES[1] = LDeg[1];
-        LJDES[2] = LKuanDeg[0]; // LJ0
-        LJDES[3] = LKuanDeg[1]; // LJ1
+        LJDES[0] = 0;
+        LJDES[1] = 0;
+        LJDES[2] = 0; // LJ2
+        LJDES[3] = LKuanDeg[1]; // LJ3
         LJDES[4] = lj4angle;   // Lj4
         LJDES[5] = lj5angle;   // Lj5
 
@@ -343,13 +390,16 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             TR_data[i] = (float *)&SSI[i];
         }
 
+        for (int i = 0; i < 12; i++)
+            std::cout << "编码器" << i <<"  "<< *TR_data[i] << '\n';
+
         float Ldes = bipins.RJ2convert(RJDES[0]);
         float Lreal = bipins.RJ2convert(*TR_data[0]);
 
         float L4real, L5real, L4des, L5des;
 
-        float gang0des, gang1des;
-        float gang0real, gang1real;
+        float gang0des, gang1des,lgang0des,lgang1des;
+        float gang0real, gang1real,lgang0real,lgang1real;
         filter.update(*TR_data[2]);
         // std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
         //  std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
@@ -358,8 +408,8 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // std::cout<<"rj3 des:"<<RJDES[1]<<'\n';
         std::cout << "rj4 real:" << *TR_data[4] << '\n';
         std::cout << "rj5 real:" << *TR_data[5] << '\n';
-        bipins.RJ0RJ1convert(RJDES[2], RJDES[3], gang0des, gang1des);
-        bipins.RJ0RJ1convert(*TR_data[2], *TR_data[3], gang0real, gang1real);
+        bipins.RJ0RJ1convert(RJDES[0], RJDES[1], gang0des, gang1des);
+        bipins.RJ0RJ1convert(*TR_data[0], *TR_data[1], gang0real, gang1real);
 
         // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
         // std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
@@ -367,12 +417,13 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
         // std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
 
-     
-
         PIDSetpointSet(&PID_ptr_M[0], gang0des);
         PIDInputSet(&PID_ptr_M[0], gang0real); // gang0
         PIDCompute(&PID_ptr_M[0]);
         FeedforwardAdd(&PID_ptr_M[0], gang0des);
+
+      
+        
         // logger.rj0des=RJDES[2];
         // logger.rj0=*TR_data[2];
         // PID_ptr_M[0].output=-4;
@@ -383,14 +434,36 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDInputSet(&PID_ptr_M[1], gang1real); // gang1
         PIDCompute(&PID_ptr_M[1]);
         FeedforwardAdd(&PID_ptr_M[1], gang1des);
+
+        bipins.LJ0LJ1convert(LJDES[0], LJDES[1], lgang0des, lgang1des);
+        bipins.LJ0LJ1convert(*TR_data[6], *TR_data[7], lgang0real, lgang1real);
+
+        // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
+        // std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
+        // std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
+        // std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
+        // std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
+
+        PIDSetpointSet(&PID_ptr_M[6], gang0des);
+        PIDInputSet(&PID_ptr_M[6], gang0real); // gang0
+        PIDCompute(&PID_ptr_M[6]);
+        FeedforwardAdd(&PID_ptr_M[6], gang0des);
+
+        PIDSetpointSet(&PID_ptr_M[7], gang1des);
+        PIDInputSet(&PID_ptr_M[7], gang1real); // gang1
+        PIDCompute(&PID_ptr_M[7]);
+        FeedforwardAdd(&PID_ptr_M[7], gang1des);
+
+
+
         // logger.rj1des=RJDES[3];
         // logger.rj1=*TR_data[3];
         //   PID_ptr_M[1].output=-4;
         // std::cout<<"PID输出"<<PID_ptr_M[1].output<<'\n';
 
 
-        float rj2desl = bipins.RJ2convert(RJDES[0]);
-        float rj2reall = bipins.RJ2convert(*TR_data[0]);
+        float rj2desl = bipins.RJ2convert(RJDES[2]);
+        float rj2reall = bipins.RJ2convert(*TR_data[2]);
         // std::cout<<"期望伸长量"<<rj2desl<<'\n';
         // std::cout<<"实际伸长量"<<rj2reall<<'\n';
 
@@ -403,10 +476,23 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         //  std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
         // logger.pidoutput[2]=PID_ptr_M[2].output;
 
-        float RJ3Ldes = bipins.RJ3Convert(RJDES[1]);
-        float RJ3L = bipins.RJ3Convert(*TR_data[1]);
-        PIDSetpointSet(&PID_ptr_M[3], RJDES[1]);
-        PIDInputSet(&PID_ptr_M[3], *TR_data[1]);
+        float lj2desl = bipins.LJ2convert(LJDES[2]);
+        float lj2reall = bipins.LJ2convert(*TR_data[2]);
+        // std::cout<<"期望伸长量"<<rj2desl<<'\n';
+        // std::cout<<"实际伸长量"<<rj2reall<<'\n';
+
+        PIDSetpointSet(&PID_ptr_M[8], lj2desl); // RJ2
+        PIDInputSet(&PID_ptr_M[8], lj2reall);
+        PIDCompute(&PID_ptr_M[8]);
+        FeedforwardAdd(&PID_ptr_M[8], -1 * lj2desl);
+
+
+
+
+        float RJ3Ldes = bipins.RJ3Convert(RJDES[3]);
+        float RJ3L = bipins.RJ3Convert(*TR_data[3]);
+        PIDSetpointSet(&PID_ptr_M[3], RJDES[3]);
+        PIDInputSet(&PID_ptr_M[3], *TR_data[3]);
         PIDCompute(&PID_ptr_M[3]);
         FeedforwardAdd(&PID_ptr_M[3], RJ3Ldes);
 
@@ -427,6 +513,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDInputSet(&PID_ptr_M[5], L5real);
         PIDCompute(&PID_ptr_M[5]);
         FeedforwardAdd(&PID_ptr_M[5], L5des);
+
 
         // logger.rj3des=RJDES[1];
         // logger.rj3=*TR_data[1];
@@ -618,7 +705,7 @@ int main(int argc, char **argv)
         return -1;
     }
     if (!(sc2 = ecrt_master_slave_config(
-              master, BusCouplerPos2, TI_AM3359ICE)))
+              master, BusCouplerPos2, TI_AM3359ICE1)))
     {
         fprintf(stderr, "Failed to get slave configuration.\n");
         return -1;
@@ -629,6 +716,33 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to get slave configuration.\n");
         return -1;
     }
+
+    if (!(sc4 = ecrt_master_slave_config(
+              master, BusCouplerPos4, TI_AM3359ICE1)))
+    {
+        fprintf(stderr, "Failed to get slave configuration.\n");
+        return -1;
+    }
+    if (!(sc5 = ecrt_master_slave_config(
+              master, BusCouplerPos5, TI_AM3359ICE1)))
+    {
+        fprintf(stderr, "Failed to get slave configuration.\n");
+        return -1;
+    }
+    if (!(sc6 = ecrt_master_slave_config(
+              master, BusCouplerPos6, TI_AM3359ICE1)))
+    {
+        fprintf(stderr, "Failed to get slave configuration.\n");
+        return -1;
+    }
+    if (!(sc7 = ecrt_master_slave_config(
+              master, BusCouplerPos7, TI_AM3359ICE1)))
+    {
+        fprintf(stderr, "Failed to get slave configuration.\n");
+        return -1;
+    }
+
+    
 
     // 设置PDOS，利⽤sc、EC_END、对⻬信息
     printf("Configuring PDOs...\n");
@@ -647,6 +761,34 @@ int main(int argc, char **argv)
 
     printf("Configuring PDOs...\n");
     if (ecrt_slave_config_pdos(sc3, EC_END, slave_1_syncs))
+    {
+        fprintf(stderr, "Failed to configure PDOs.\n");
+        return -1;
+    }
+
+     printf("Configuring PDOs...\n");
+    if (ecrt_slave_config_pdos(sc4, EC_END, slave_3_syncs))
+    {
+        fprintf(stderr, "Failed to configure PDOs.\n");
+        return -1;
+    }
+
+     printf("Configuring PDOs...\n");
+    if (ecrt_slave_config_pdos(sc5, EC_END, slave_4_syncs))
+    {
+        fprintf(stderr, "Failed to configure PDOs.\n");
+        return -1;
+    }
+
+     printf("Configuring PDOs...\n");
+    if (ecrt_slave_config_pdos(sc6, EC_END, slave_5_syncs))
+    {
+        fprintf(stderr, "Failed to configure PDOs.\n");
+        return -1;
+    }
+
+     printf("Configuring PDOs...\n");
+    if (ecrt_slave_config_pdos(sc7, EC_END, slave_6_syncs))
     {
         fprintf(stderr, "Failed to configure PDOs.\n");
         return -1;
@@ -683,6 +825,73 @@ int main(int argc, char **argv)
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
     }
+
+    
+    off_bytes_0x6000_2[0] = ecrt_slave_config_reg_pdo_entry(sc4, 0x6000, 1, domain, &off_bits_0x6000_2[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_2[0], off_bits_0x6000_2[0]);
+    if (off_bytes_0x6000_2[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_2[1] = ecrt_slave_config_reg_pdo_entry(sc4, 0x6000, 2, domain, &off_bits_0x6000_2[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_2[1], off_bits_0x6000_2[1]);
+    if (off_bytes_0x6000_2[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_3[0] = ecrt_slave_config_reg_pdo_entry(sc5, 0x6000, 1, domain, &off_bits_0x6000_3[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_3[0], off_bits_0x6000_3[0]);
+    if (off_bytes_0x6000_3[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_3[1] = ecrt_slave_config_reg_pdo_entry(sc5, 0x6000, 2, domain, &off_bits_0x6000_3[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_3[1], off_bits_0x6000_3[1]);
+    if (off_bytes_0x6000_3[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_4[0] = ecrt_slave_config_reg_pdo_entry(sc6, 0x6000, 1, domain, &off_bits_0x6000_4[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_4[0], off_bits_0x6000_4[0]);
+    if (off_bytes_0x6000_4[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_4[1] = ecrt_slave_config_reg_pdo_entry(sc6, 0x6000, 2, domain, &off_bits_0x6000_4[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_4[1], off_bits_0x6000_4[1]);
+    if (off_bytes_0x6000_4[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+       off_bytes_0x6000_5[0] = ecrt_slave_config_reg_pdo_entry(sc7, 0x6000, 1, domain, &off_bits_0x6000_5[0]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_5[0], off_bits_0x6000_5[0]);
+    if (off_bytes_0x6000_5[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6000_5[1] = ecrt_slave_config_reg_pdo_entry(sc7, 0x6000, 2, domain, &off_bits_0x6000_5[1]);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_5[1], off_bits_0x6000_5[1]);
+    if (off_bytes_0x6000_5[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+
 
     off_bytes_0x7010[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 1, domain, &off_bits_0x7010[0]);
     printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[0], off_bits_0x7010[0]);

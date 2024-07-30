@@ -75,6 +75,10 @@ public:
         float L=OA*sin(DEG)-AB*cos(asin((OA*cos(DEG)-e)/AB));
         return L-L0;
     }
+    float LJ2convert(float DEG)
+    {
+        return RJ2convert(DEG);
+    }
     
     float RJ3Convert(float DEG)
     {
@@ -93,6 +97,8 @@ public:
     void RJ4RJ5convert(float DEG_4,float DEG_5,float &L4, float &L5);
 
     void RJ0RJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
+
+    void LJ0LJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
 
 
     void ComputeIK(Vec6<double> &q, Vec3<double> &p, Mat33<double> R=Mat33<double>::Identity())
