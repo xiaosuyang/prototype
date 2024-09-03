@@ -344,6 +344,11 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         {
             // Deg[1]=15*sin(0.2*M_PI*time+1.5*M_PI);
             // Deg[0]=15*sin(M_PI*time);
+            // LDeg[0]=3*sin(M_PI*time);
+            // LDeg[2]=15*sin(M_PI*time);
+            KuanDeg[1]=20*sin(1*M_PI*time+1.5*M_PI)+20;
+           // LDeg[2]=8*sin(0.5*M_PI*time);
+           // LDeg[2]=-20;
             // KuanDeg[0] = 2.5 * sin(M_PI * time);
             // rj4angle=-12*sin(M_PI*time);
             //    _FSMController->run();
@@ -370,9 +375,9 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         RJDES[4] = rj4angle;          // Rj4
         RJDES[5] = rj5angle;          // Rj5
 
-        LJDES[0] = 0;
+        LJDES[0] = LDeg[0];
         LJDES[1] = 0;
-        LJDES[2] = 0; // LJ2
+        LJDES[2] = LDeg[2]; // LJ2
         LJDES[3] = LKuanDeg[1]; // LJ3
         LJDES[4] = lj4angle;   // Lj4
         LJDES[5] = lj5angle;   // Lj5
@@ -390,8 +395,8 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             TR_data[i] = (float *)&SSI[i];
         }
 
-        for (int i = 0; i < 12; i++)
-            std::cout << "编码器" << i <<"  "<< *TR_data[i] << '\n';
+        // for (int i = 0; i < 12; i++)
+        //     std::cout << "编码器" << i <<"  "<< *TR_data[i] << '\n';
 
         float Ldes = bipins.RJ2convert(RJDES[0]);
         float Lreal = bipins.RJ2convert(*TR_data[0]);
@@ -406,8 +411,8 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         //  std::cout<<"rj0 des: "<<RJDES[2]<<'\n';
         //  std::cout<<"rj3 real: "<<*TR_data[1]<<'\n';
         // std::cout<<"rj3 des:"<<RJDES[1]<<'\n';
-        std::cout << "rj4 real:" << *TR_data[4] << '\n';
-        std::cout << "rj5 real:" << *TR_data[5] << '\n';
+        //std::cout << "rj4 real:" << *TR_data[4] << '\n';
+        //std::cout << "rj5 real:" << *TR_data[5] << '\n';
         bipins.RJ0RJ1convert(RJDES[0], RJDES[1], gang0des, gang1des);
         bipins.RJ0RJ1convert(*TR_data[0], *TR_data[1], gang0real, gang1real);
 
@@ -439,22 +444,23 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         bipins.LJ0LJ1convert(*TR_data[6], *TR_data[7], lgang0real, lgang1real);
 
         // bipins.RJ0RJ1convert(*TR_data[2],0,gang0real,gang1real);
-        // std::cout<<"髋部油缸0 gang0des:" <<gang0des<<'\n';
-        // std::cout<<"髋部油缸0 gang0real:" <<gang0real<<'\n';
-        // std::cout<<"髋部油缸1 gang1des:" <<gang1des<<'\n';
-        // std::cout<<"髋部油缸1 gang1real:" <<gang1real<<'\n';
+        // std::cout<<"髋部油缸0 gang0des:" <<lgang0des<<'\n';
+        // std::cout<<"髋部油缸0 gang0real:" <<lgang0real<<'\n';
+        // std::cout<<"髋部油缸1 gang1des:" <<lgang1des<<'\n';
+        // std::cout<<"髋部油缸1 gang1real:" <<lgang1real<<'\n';
 
-        PIDSetpointSet(&PID_ptr_M[6], gang0des);
-        PIDInputSet(&PID_ptr_M[6], gang0real); // gang0
+        PIDSetpointSet(&PID_ptr_M[6], lgang0des);
+        PIDInputSet(&PID_ptr_M[6], lgang0real); // gang0
         PIDCompute(&PID_ptr_M[6]);
-        FeedforwardAdd(&PID_ptr_M[6], gang0des);
+        FeedforwardAdd(&PID_ptr_M[6], lgang0des);
 
-        PIDSetpointSet(&PID_ptr_M[7], gang1des);
-        PIDInputSet(&PID_ptr_M[7], gang1real); // gang1
+        PIDSetpointSet(&PID_ptr_M[7], lgang1des);
+        PIDInputSet(&PID_ptr_M[7], lgang1real); // gang1
         PIDCompute(&PID_ptr_M[7]);
-        FeedforwardAdd(&PID_ptr_M[7], gang1des);
+        FeedforwardAdd(&PID_ptr_M[7], lgang1des);
 
-
+         // std::cout<<"LJ0PID输出"<<PID_ptr_M[6].output<<'\n';
+         //   std::cout<<"LJ1PID输出"<<PID_ptr_M[7].output<<'\n';
 
         // logger.rj1des=RJDES[3];
         // logger.rj1=*TR_data[3];
@@ -477,16 +483,17 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // logger.pidoutput[2]=PID_ptr_M[2].output;
 
         float lj2desl = bipins.LJ2convert(LJDES[2]);
-        float lj2reall = bipins.LJ2convert(*TR_data[2]);
-        // std::cout<<"期望伸长量"<<rj2desl<<'\n';
-        // std::cout<<"实际伸长量"<<rj2reall<<'\n';
+        float lj2reall = bipins.LJ2convert(*TR_data[8]);
+       //  std::cout<<"期望伸长量"<<lj2desl<<'\n';
+       //  std::cout<<"实际伸长量"<<lj2reall<<'\n';
 
         PIDSetpointSet(&PID_ptr_M[8], lj2desl); // RJ2
         PIDInputSet(&PID_ptr_M[8], lj2reall);
         PIDCompute(&PID_ptr_M[8]);
-        FeedforwardAdd(&PID_ptr_M[8], -1 * lj2desl);
+        FeedforwardAdd(&PID_ptr_M[8],  lj2desl);
+        //PID_ptr_M[8].output=0.5*lj2desl;
 
-
+      //  std::cout<<"LJ2PID输出"<<PID_ptr_M[8].output<<'\n';
 
 
         float RJ3Ldes = bipins.RJ3Convert(RJDES[3]);
@@ -496,13 +503,17 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDCompute(&PID_ptr_M[3]);
         FeedforwardAdd(&PID_ptr_M[3], RJ3Ldes);
 
+        std::cout<<"RJ3PID输出"<<PID_ptr_M[3].output<<'\n';
+        std::cout<<"RJ3实际:"<<*TR_data[3]<<'\n';
+        std::cout<<"RJ3期望"<<RJDES[3]<<'\n';
+
         bipins.RJ4RJ5convert(RJDES[4], RJDES[5], L4des, L5des);
         bipins.RJ4RJ5convert(*TR_data[4], *TR_data[5], L4real, L5real);
 
-        std::cout << "L4 real" << L4real << '\n';
-        std::cout << "L4 des" << L4des << '\n';
-        std::cout << "L5 real" << L5real << '\n';
-        std::cout << "L5 des" << L5des << '\n';
+        // std::cout << "L4 real" << L4real << '\n';
+        // std::cout << "L4 des" << L4des << '\n';
+        // std::cout << "L5 real" << L5real << '\n';
+        // std::cout << "L5 des" << L5des << '\n';
 
         PIDSetpointSet(&PID_ptr_M[4], L4des);
         PIDInputSet(&PID_ptr_M[4], L4real);
@@ -542,6 +553,12 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         //     }
         // }
         // 定义要赋值给 b 的索引
+    
+
+//         PID_ptr_M[1].output=5*sin(M_PI*time+1.5*M_PI);
+        // PID_ptr_M[5].output=5*sin(0.1*M_PI*time+1.5*M_PI);
+        // PID_ptr_M[3].output=5*sin(M_PI*time+1.5*M_PI);
+//  std::cout<<"RJ1PID输出"<<PID_ptr_M[1].output<<'\n';
         int OutIndex[6] = {0, 1, 5, 6, 7, 11};
 
         // 创建一个布尔数组来标记 
@@ -583,10 +600,10 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0],*TR_data[0],*TR_data[2],*TR_data[3],
         // PID_ptr_M[2].alteredKp,PID_ptr_M[2].dispKi,rj2desl,PID_ptr_M[2].FF,PID_ptr_M[2].output);
 
-        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[5], *TR_data[4], *TR_data[5],
-        //         PID_ptr_M[4].output, PID_ptr_M[5].output, L4real, L5real,Deg[0],Deg[1],Deg[2]);
+         sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", LJDES[0], *TR_data[6], LJDES[1],
+                 *TR_data[7],LJDES[2], *TR_data[8],PID_ptr_M[6].output,PID_ptr_M[8].FF,lj2desl,lj2reall);
 
-        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", KuanDeg[0], KuanDeg[1], Deg[0], Deg[1], rj4angle, rj5angle, LKuanDeg[0], LKuanDeg[1], LDeg[0], LDeg[1], lj4angle, lj5angle,Deg[2],LDeg[2]);
+       // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", KuanDeg[0], KuanDeg[1], Deg[0], Deg[1], rj4angle, rj5angle, LKuanDeg[0], LKuanDeg[1], LDeg[0], LDeg[1], lj4angle, lj5angle,Deg[2],LDeg[2]);
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
     }
@@ -1058,15 +1075,15 @@ int main(int argc, char **argv)
     /*
     PIDK: 0.8,0.2,0,-0.1
     */
-    PIDInit(&PID_ptr_M[6], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[6], 0.6, 0.05, 0, 0.1, controltime, -10, 10, AUTOMATIC,DIRECT);
     // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     // PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-    PIDInit(&PID_ptr_M[7], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[7], 0.6, 0.05, 0, 0.1, controltime, -10, 10, AUTOMATIC, DIRECT);
     /*
     PIDK: 0.065,0.024,0,-0.02
    */
-    PIDInit(&PID_ptr_M[8], 0.065, 0.024, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[8], Kp, Ki, 0, Ks, controltime, -10, 10, AUTOMATIC, REVERSE);
     /*
     PIDK: 0.06,0.004,0,0.0811
     */

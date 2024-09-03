@@ -31,8 +31,8 @@ void Biped::LJ0LJ1convert(float DEG_0,float DEG_1,float &L0,float &L1)
     DEG_0=deg2rad(DEG_0);
     DEG_1=deg2rad(DEG_1);
 
-    Vec3<float> B_O2P1{-85,190,17};
-    Vec3<float> F1_O2t1{-85,54,-30};
+    Vec3<float> B_O2P1{-85,-190,17};
+    Vec3<float> F1_O2t1{-85,-54,-30};
 
 
     Vec3<float> y0=B_O2P1-F1_O2t1;
@@ -40,8 +40,8 @@ void Biped::LJ0LJ1convert(float DEG_0,float DEG_1,float &L0,float &L1)
     
     L0=(y.norm()-y0.norm());
 
-    Vec3<float> B_O2P1_1{85,190,17};
-    Vec3<float> F1_O2t1_1{85,54,-30};
+    Vec3<float> B_O2P1_1{85,-190,17};
+    Vec3<float> F1_O2t1_1{85,-54,-30};
 
     y0=B_O2P1_1-F1_O2t1_1;
     y=B_O2P1_1-ori::coordinateRotation(ori::CoordinateAxis::Z,DEG_0)*ori::coordinateRotation(ori::CoordinateAxis::X,DEG_1)*F1_O2t1_1;
