@@ -110,6 +110,13 @@ float  deg2rad(T deg)
 
 }
 
+template<typename T>
+float numderivative(T f2,T f1, float stime)
+{
+  return (f2-f1)/(2*stime);
+}
+
+
 
 
 

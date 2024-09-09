@@ -52,6 +52,16 @@ public:
     ori::CoordinateAxis axisname[6];
     // std::array<double,6> Initialq{0,0,-0.338,0.7616,-0.425,0};
     double Initialq[6]={0,0,-0.338,0.7616,-0.425,0};
+
+    const float J3gangW=3.8e-4;
+    const float J3gangY=2.03e-4;
+    const float Dp=1.5e-6;//立方米每转
+
+    float flowrate;
+    uint32_t pumpvelFF=0;
+    float sampletime;
+
+
     template <typename T>
     float sign(T num)
     {
@@ -94,7 +104,14 @@ public:
         return AB-AB0;
     }
 
+    float  LJ3Convert(float DEG)
+    {
+        return RJ3Convert(DEG);
+    }
+
     void RJ4RJ5convert(float DEG_4,float DEG_5,float &L4, float &L5);
+
+    void LJ4LJ5convert(float DEG_4,float DEG_5,float &L4, float &L5);
 
     void RJ0RJ1convert(float DEG_O,float DEG_1,float &L0,float &L1);
 
@@ -172,6 +189,34 @@ public:
         }
         return pHip;
     };
+
+    void computepumpvel(float jointv1[],float jointv2[] )
+    {
+        float RJ3v1=jointv1[3];
+
+        float RJ3v2=jointv2[3];
+
+        float RL3v1=RJ3Convert(RJ3v1);
+        float RL3v2=RJ3Convert(RJ3v2);
+
+        RL3v1*=1e-3;
+        RL3v2*=1e-3;
+
+        flowrate=0;
+
+        float RL3speed=numderivative(RL3v2,RL3v1,sampletime);
+
+        flowrate+=std::abs(RL3speed>0?RL3speed*J3gangW:RL3speed*J3gangY);
+
+        float pumpvel=flowrate/Dp;
+
+        pumpvel*=60;
+
+        if(pumpvel>65536) pumpvel=65536;
+
+        pumpvelFF=pumpvel;
+
+    }
 };
 
 #endif

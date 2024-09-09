@@ -121,6 +121,10 @@ static unsigned int user_alarms = 0;
 // #define TI_AM3359ICE 0x00000009, 0x26483052
 
 // // offsets for PDO entries
+
+static unsigned int off_bytes_0x7030 ;
+static unsigned int off_bits_0x7030;
+
 static unsigned int off_bytes_0x6000[2] = {1};
 static unsigned int off_bits_0x6000[2] = {1};
 
@@ -181,10 +185,14 @@ LowPassFilter filter;
 
 float Deg[3];
 float KuanDeg[2];
-float rj4angle = 0, rj5angle = 0;
+float rj4angle = 0, rj5angle = 0,rj3angle=0,rj2angle=0,rj1angle=0,rj0angle=0;
 float LDeg[3];
 float LKuanDeg[2];
-float lj4angle = 0, lj5angle = 0;
+float lj4angle = 0, lj5angle = 0,lj3angle=0,lj2angle=0,lj1angle=0,lj0angle=0;
+
+float legpre2[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+float legpre1[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+
 unsigned long SSI[12];
 
 void check_domain_state(void)
@@ -307,16 +315,17 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time + 1.5 * M_PI) - 1);
         // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
         // Deg[0] = 1*(14 * sin(0.2 * M_PI * time));
-        KuanDeg[0] = 0;
-        KuanDeg[1] = 0;
-        Deg[0] = 0;
-        Deg[1] = 0;
+        rj0angle=0;
+        rj1angle=0;
+        rj2angle=0;
+        rj3angle=0;
         rj4angle = 0;
         rj5angle = 0;
-        LKuanDeg[0] = 0;
-        LKuanDeg[1] = 0;
-        LDeg[0] = 0;
-        LDeg[1] = 0;
+     
+        lj0angle=0;
+        lj1angle=0;
+        lj2angle=0;
+        lj3angle=0;
         lj4angle = 0;
         lj5angle = 0;
 
@@ -346,7 +355,10 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             // Deg[0]=15*sin(M_PI*time);
             // LDeg[0]=3*sin(M_PI*time);
             // LDeg[2]=15*sin(M_PI*time);
-            KuanDeg[1]=20*sin(1*M_PI*time+1.5*M_PI)+20;
+            rj3angle=20*sin(1*M_PI*time+1.5*M_PI)+20;
+
+            legpre2[2]=20*sin(1*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
+            legpre1[2]=20*sin(1*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
            // LDeg[2]=8*sin(0.5*M_PI*time);
            // LDeg[2]=-20;
             // KuanDeg[0] = 2.5 * sin(M_PI * time);
@@ -356,6 +368,9 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
           //  _FSMController->run();
         }
 
+        bipins.computepumpvel(legpre1,legpre2);
+        bipins.pumpvelFF=bipins.pumpvelFF<<16;
+        EC_WRITE_U32(domain_pd +off_bytes_0x7030, bipins.pumpvelFF);
         // Deg[2] = 0;
         // Deg[1] = 0;
         // Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
@@ -368,17 +383,16 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         
         float RJDES[6];
         float LJDES[6];
-        RJDES[0] = Deg[0];
-        RJDES[1] = Deg[1];
-        RJDES[2] = KuanDeg[0]; // RJ0
-        RJDES[3] = KuanDeg[1]; // RJ1
+        RJDES[0] = rj0angle;
+        RJDES[1] = rj1angle;
+        RJDES[2] = rj2angle; // RJ0
+        RJDES[3] = rj3angle; // RJ1
         RJDES[4] = rj4angle;          // Rj4
         RJDES[5] = rj5angle;          // Rj5
 
-        LJDES[0] = LDeg[0];
-        LJDES[1] = 0;
-        LJDES[2] = LDeg[2]; // LJ2
-        LJDES[3] = LKuanDeg[1]; // LJ3
+        LJDES[0] = lj1angle;
+        LJDES[1] = lj2angle;
+        LJDES[2] = lj3angle; // LJ3
         LJDES[4] = lj4angle;   // Lj4
         LJDES[5] = lj5angle;   // Lj5
 
@@ -405,7 +419,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         float gang0des, gang1des,lgang0des,lgang1des;
         float gang0real, gang1real,lgang0real,lgang1real;
-        filter.update(*TR_data[2]);
+       // filter.update(*TR_data[2]);
         // std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
         //  std::cout<<"rj0 real: "<<*TR_data[2]<<'\n';
         //  std::cout<<"rj0 des: "<<RJDES[2]<<'\n';
@@ -811,6 +825,14 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    off_bytes_0x7030 = ecrt_slave_config_reg_pdo_entry(sc1, 0x7030, 1, domain, &off_bits_0x7030);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x7030, off_bits_0x7030);
+    if (off_bytes_0x7030 < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
     off_bytes_0x6000[0] = ecrt_slave_config_reg_pdo_entry(sc1, 0x6000, 1, domain, &off_bits_0x6000[0]);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000[0], off_bits_0x6000[0]);
     if (off_bytes_0x6000[0] < 0)
@@ -1100,6 +1122,9 @@ int main(int argc, char **argv)
     printf("Started.\n");
 
     Biped bipedinstance;
+
+    bipedinstance.sampletime=0.01;
+
     float time = 0;
 
     while (1)
