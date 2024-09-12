@@ -125,6 +125,10 @@ static unsigned int user_alarms = 0;
 static unsigned int off_bytes_0x7030 ;
 static unsigned int off_bits_0x7030;
 
+static unsigned int off_bytes_0x7030_1 ;
+static unsigned int off_bits_0x7030_1;
+
+
 static unsigned int off_bytes_0x6000[2] = {1};
 static unsigned int off_bits_0x6000[2] = {1};
 
@@ -357,8 +361,8 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
             // LDeg[2]=15*sin(M_PI*time);
             rj3angle=20*sin(1*M_PI*time+1.5*M_PI)+20;
 
-            legpre2[2]=20*sin(1*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
-            legpre1[2]=20*sin(1*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
+            legpre2[3]=20*sin(1*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
+            legpre1[3]=20*sin(1*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
            // LDeg[2]=8*sin(0.5*M_PI*time);
            // LDeg[2]=-20;
             // KuanDeg[0] = 2.5 * sin(M_PI * time);
@@ -369,8 +373,10 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         }
 
         bipins.computepumpvel(legpre1,legpre2);
+       // bipins.pumpvelFF=199;
+        cout<<bipins.pumpvelFF;
         bipins.pumpvelFF=bipins.pumpvelFF<<16;
-        EC_WRITE_U32(domain_pd +off_bytes_0x7030, bipins.pumpvelFF);
+        EC_WRITE_U32(domain_pd +off_bytes_0x7030_1, bipins.pumpvelFF);
         // Deg[2] = 0;
         // Deg[1] = 0;
         // Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
@@ -860,6 +866,14 @@ int main(int argc, char **argv)
     off_bytes_0x6000_1[1] = ecrt_slave_config_reg_pdo_entry(sc2, 0x6000, 2, domain, &off_bits_0x6000_1[1]);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_1[1], off_bits_0x6000_1[1]);
     if (off_bytes_0x6000_1[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x7030_1 = ecrt_slave_config_reg_pdo_entry(sc2, 0x7030, 1, domain, &off_bits_0x7030_1);
+    printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x7030_1, off_bits_0x7030_1);
+    if (off_bytes_0x7030_1 < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
