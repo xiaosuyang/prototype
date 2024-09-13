@@ -195,6 +195,7 @@ float LKuanDeg[2];
 float lj4angle = 0, lj5angle = 0,lj3angle=0,lj2angle=0,lj1angle=0,lj0angle=0;
 
 float legpre2[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+float legpre1_5[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 float legpre1[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 
 unsigned long SSI[12];
@@ -363,6 +364,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
             legpre2[3]=20*sin(1*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
             legpre1[3]=20*sin(1*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
+            legpre1_5[3]=20*sin(1*M_PI*(time+0.1)+1.5*M_PI)+20;
            // LDeg[2]=8*sin(0.5*M_PI*time);
            // LDeg[2]=-20;
             // KuanDeg[0] = 2.5 * sin(M_PI * time);
@@ -372,7 +374,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
           //  _FSMController->run();
         }
 
-        bipins.computepumpvel(legpre1,legpre2);
+        bipins.computepumpvel(legpre1,legpre2,legpre1_5);
        // bipins.pumpvelFF=199;
         cout<<bipins.pumpvelFF;
         bipins.pumpvelFF=bipins.pumpvelFF<<16;

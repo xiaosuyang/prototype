@@ -190,14 +190,17 @@ public:
         return pHip;
     };
 
-    void computepumpvel(float jointv1[],float jointv2[] )
+    void computepumpvel(float jointv1[],float jointv2[],float jointv1_5[] )
     {
         float RJ3v1=jointv1[3];
 
         float RJ3v2=jointv2[3];
 
+        float RJ3V1_5=jointv1_5[3];
+
         float RL3v1=RJ3Convert(RJ3v1);
         float RL3v2=RJ3Convert(RJ3v2);
+        float RL3v1_5=RJ3Convert(RJ3V1_5);
 
         RL3v1*=1e-3;
         RL3v2*=1e-3;
@@ -206,7 +209,15 @@ public:
 
         float RL3speed=numderivative(RL3v2,RL3v1,sampletime);
 
+        float RL3acc=secondaryderivative(RL3v2,RL3v1_5,RL3v1,sampletime);
+
         flowrate+=std::abs(RL3speed>0?RL3speed*J3gangW:RL3speed*J3gangY);
+
+        float minflowrate=8e-6;
+
+        if(abs(RL3acc)>1e-2)
+        flowrate=std::max(minflowrate,flowrate);
+
 
         float pumpvel=flowrate/Dp;
 

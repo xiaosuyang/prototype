@@ -116,6 +116,17 @@ float numderivative(T f2,T f1, float stime)
   return (f2-f1)/(2*stime);
 }
 
+template<typename T>
+float secondaryderivative(T f3,T f2,T f1, float stime)
+{
+  stime=stime/2;
+  float V1=numderivative(f2,f1,stime);
+  float V2=numderivative(f3,f2,stime);
+
+  return (V2-V1)/stime;
+
+}
+
 
 
 
