@@ -38,6 +38,7 @@
 //*********************************************************************************
 #include "pid_controller.h"
 #include <stdio.h>
+//#include <iostream>
 //*********************************************************************************
 // Macros and Globals
 //*********************************************************************************
@@ -222,15 +223,69 @@ PIDSampleTimeSet(PIDControl *pid, float sampleTimeSeconds)
     }
 }
 
-bool FeedforwardAdd(PIDControl *pid,float input)
+bool FeedforwardAdd(PIDControl *pid,float input,bool flag)
 {
  
   pid->FF=1*pid->Ks*(input-pid->FFlastinput)/pid->sampleTime;
+  //std::cout<<"PIDFF:\n";
+  //std::cout<<pid->FF<<'\n';
   pid->FFlastinput=input;
    //printf("前馈值%f\n",FF);
-  pid->output=CONSTRAIN(pid->output+pid->FF,(pid->outMin), (pid->outMax));
+   if(flag)
+   {
+      pid->output=CONSTRAIN(pid->output+pid->FF,(pid->outMin), (pid->outMax));
+   }
+
 
 }
+/*
+A1:无杆腔
+A2：有杆腔；
+
+*/
+
+bool FeedforwardAdd_P(PIDControl *pid,float A1,float A2,float ps,float p0,float p1, float p2,float u1,float In,float Gain)
+{
+    constexpr float Qn=7e-3/60;
+    constexpr float Pn=21e6;
+
+    float Kv=Qn/(In*sqrt(Pn));
+
+    float Id1=0,Id2=0;
+
+    if(u1>=0)
+    {
+        if(ps>p1)
+        {
+            Id1=u1*A1/(Kv*std::sqrt(ps-p1));
+        }
+
+        if(p2>p0)
+        {
+         //   Id2=u1*A2/(Kv*std::sqrt(p2-p0));
+        }
+
+    }
+    else
+    {
+        if(p1>p0)
+        {
+         //   Id1=u1*A1/(Kv*std::sqrt(p1-p0));
+        }
+        if(ps>p2)
+        {
+            Id2=u1*A2/(Kv*std::sqrt(ps-p2));
+        }
+
+    }
+
+    float Id=Gain*(Id1+Id2);
+
+    pid->FFP=Id;
+    pid->output=CONSTRAIN(pid->output+pid->FFP,(pid->outMin), (pid->outMax));
+
+}
+
 void 
 PIDSetpointSet(PIDControl *pid, float setpoint) { pid->setpoint = setpoint; }
 
@@ -262,7 +317,8 @@ PIDInputSet(PIDControl *pid, float input) { pid->input = input; }
 PIDOutputGet(PIDControl *pid) { return pid->output; }
 
 // 
-// PID Proportional Gain Constant Get
+// PID Proportional Gain Constant Get111
+
 // Description:
 //      Returns the proportional gain constant value the particular
 //      controller is set to.

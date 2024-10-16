@@ -16,10 +16,11 @@
 
 extern float Deg[3];
 extern float KuanDeg[2];
-extern float rj4angle, rj5angle;
+extern float rj0angle,rj1angle,rj2angle,rj3angle,rj4angle, rj5angle;
 extern float LDeg[3];
 extern float LKuanDeg[2];
-extern float lj4angle, lj5angle;
+extern float lj0angle,lj1angle,lj2angle,lj3angle,lj4angle, lj5angle;
+
 
 enum JOINT
 {
@@ -47,8 +48,8 @@ public:
     StateEstimatorContainer* esptr) : ioptr(io),statectrl(ctrl),_stateEstimator(esptr)
     {
         for(int i=0;i<2;i++) statectrl->data[i].zero();
-        walking=new Gait(horizonLength, Vec2<int>(0, 5), Vec2<int>(5, 5), "Walking");
-        standing=new Gait(horizonLength, Vec2<int>(0, 0), Vec2<int>(10, 10), "Standing");
+        walking=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
+        walkpre=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
         dtMPC = dt * iterationsBetweenMPC;
         _lowCmd=cmdex;
         _lowState=statex;
@@ -138,11 +139,11 @@ public:
     // ros::NodeHandle _nc;
     // std::array<ros::Publisher,3>  plotsub;
     Gait* walking;
-    Gait* standing;
-    int iterationsBetweenMPC=40;
-    int horizonLength=10;
+    Gait* walkpre;
+    int iterationsBetweenMPC=4;
+    int horizonLength=30;
     FootSwingTrajectory<double> footSwingTrajectories[2];
-    double dt=0.001;
+    double dt=0.01;
     double dtMPC;
     bool firstRun = true;
     Vec3<double> world_position_desired;
@@ -161,6 +162,8 @@ public:
     Vec3<double> vDesFoot[2] ;
 
     bool firstSwing[2] = {true, true};
+
+      bool firstSwingpre[2] = {true, true};
     
     double swingTimeRemaining[2];
     float qdes=0;

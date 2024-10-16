@@ -99,3 +99,23 @@ void Biped::LJ4LJ5convert(float DEG_4,float DEG_5,float &L4, float &L5)
 
 
 }
+
+
+bool Biped::AngleInit(float &rj2,float & rj3,float &rj4,float &lj2,float & lj3,float &lj4)
+{
+    if(timer>2)
+    {
+        rj2=lj2=rad2deg(Initialq[2]);
+        rj3=lj3=rad2deg(Initialq[3]);
+         rj4=lj4=rad2deg(Initialq[4]);
+         return true;
+    }
+    rj2=lj2=timer/2*rad2deg(Initialq[2]);
+    rj3=lj3=timer/2*rad2deg(Initialq[3]);
+    rj4=lj4=timer/2*rad2deg(Initialq[4]);
+
+    timer+=sampletime;
+    return false;
+
+    
+}

@@ -8,6 +8,7 @@
 #include "IOInterface.h"
 
 extern unsigned long SSI[12];
+extern float * TR_data[12];
 
 class CheatIO : public IOInterface
 {
@@ -21,9 +22,10 @@ class CheatIO : public IOInterface
         void recvState(LowlevelState *state);
         // double Initialq[12]={0,0,-0.338,0.7616,-0.425,0,0,0,-0.338,0.7616,-0.425,0};
 
-        double Initialq[12]={0,0,-0.338,0.7616,-0.425,0,0,0,-0.338,0.7616,-0.425,0};
+        double Initialq[12]={0,0,-0.245154,0.551675,-0.30652,0,0,0,-0.245154,0.551675,-0.30652,0};
+       // double Initialq[12]={0,0,0,0,-0,0,0,0,-0,0,-0,0};
 
-        // void recvfeetState(LowlevelState *state);
+        // void recvfeetState(LowlevelState *state);s
         // ros::NodeHandle _nm;
         // ros::Subscriber _servo_sub[12], _state_sub,linkstate_sub;
         // ros::Publisher _servo_pub[12];

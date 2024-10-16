@@ -44,7 +44,7 @@
 //*********************************************************************************
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <cmath>
 // 
 // C Binding for C++ Compilers
 // 
@@ -126,6 +126,8 @@ typedef struct
     float outMin;
     float outMax;
     float FF;
+
+    float FFP;
     // 
     // The user chosen operating point
     // 
@@ -195,9 +197,9 @@ extern bool PIDCompute(PIDControl *pid);
 /*
 手调前馈
 */
-extern bool FeedforwardAdd(PIDControl *pid,float input);
+extern bool FeedforwardAdd(PIDControl *pid,float input,bool flag);
 
-
+bool FeedforwardAdd_P(PIDControl *pid,float A1,float A2,float ps,float p0,float p1, float p2,float u1,float In,float Gain);
 // 
 // PID Mode Set
 // Description:

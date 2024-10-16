@@ -61,7 +61,7 @@ SOFTWARE.
         void zero();
         Vec6<double> q, qd,qdd;
         //p:base 坐标系下足部位置。
-        Vec3<double> p, v;
+        Vec3<double> p, v;//以当前腿髋部为原点下的足部位置
         Mat66<double> J_force_moment;
         Mat36<double> J_force;
         Vec6<double> tau;

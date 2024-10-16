@@ -126,7 +126,9 @@
 
 void Checkjoint::checkgait1()
 {
-    Gait* gait = walking;
+    Gait* gait = walking;  
+    Gait* gaitpre=walkpre;
+    
     const StateEstimate &seResult = _stateEstimator->getResult();
     // get then foot location in world frame
     for (int i = 0; i < 2; i++)
@@ -163,12 +165,12 @@ void Checkjoint::checkgait1()
             swingTimeRemaining[i] -= dt;
         }
   
-        Vec3<double> pRobotFrame = statectrl->_biped.getHip2Location(i);//trunk frame下髋关节位置
+     //   Vec3<double> pRobotFrame = statectrl->_biped.getHip2Location(i);//trunk frame下髋关节位置
        // Pf = seResult.position +seResult.rBody.transpose() * pRobotFrame + walkspeed * swingTimeRemaining[i];
         double pfx_real=walkspeed[0]*0.5*gait->_stance*dtMPC;
-        Pf[i][0]=pfx_real;
-        Pf[i][1]= side_sign[i]*statectrl->_biped.leg_offset_y*0.85;
-        Pf[i][2] = seResult.position[2] -0.894+statectrl->_biped.leg_offset_z;
+        Pf[i][0]=0;
+        Pf[i][1]= side_sign[i]*statectrl->_biped.leg_offset_y*0.9;
+        Pf[i][2] = seResult.position[2] -0.8697+statectrl->_biped.leg_offset_z;
 
 
 
@@ -182,7 +184,7 @@ void Checkjoint::checkgait1()
         
 
 
-        footSwingTrajectories[i].setHeight(0.18);
+        footSwingTrajectories[i].setHeight(0.1);
         footSwingTrajectories[i].setFinalPosition(Pf[i]);
     }
 
@@ -196,20 +198,28 @@ void Checkjoint::checkgait1()
     //     0, 0, 2;
 
     gait->setIterations(iterationsBetweenMPC, iterationCounter);
+    gaitpre->setIterations(iterationsBetweenMPC,iterationCounter+10);
+    
     Vec2<double> contactStates = gait->getContactSubPhase();
     Vec2<double> swingStates = gait->getSwingSubPhase();
+
+    Vec2<double> contactStatespre = gaitpre->getContactSubPhase();
+    Vec2<double> swingStatespre = gaitpre->getSwingSubPhase();
+
+    
 
     iterationCounter++;
 
     Vec6<double> QDes[2];
     Vec6<double> QdDes[2];
     Vec3<double> Pdes[2];
-    Pdes[0] << 0, 0, -0.894-statectrl->_biped.leg_offset_z;
-    Pdes[1] << 0, 0, -0.894-statectrl->_biped.leg_offset_z;
+    // Pdes[0] << 0, 0, -0.894-statectrl->_biped.leg_offset_z;
+    // Pdes[1] << 0, 0, -0.894-statectrl->_biped.leg_offset_z;
     // statectrl->commands[0].kpCartesian = Kp;
     // statectrl->commands[0].kdCartesian = Kd;
     // statectrl->commands[1].kpCartesian = Kp;
     // statectrl->commands[1].kdCartesian = Kd;
+
 
     for (int foot = 0; foot < 2; foot++)
     {
@@ -231,20 +241,10 @@ void Checkjoint::checkgait1()
             pDesFoot[foot] = seResult.rBody * (pDesFootWorld[foot] - seResult.position);
             vDesFoot[foot] = seResult.rBody * (vDesFootWorld[foot] - seResult.vWorld);
 
-            // pDesFoot[foot] = Mat33<double>::Identity() * (pDesFootWorld[foot] - seResult.position);
-            // vDesFoot[foot] = Mat33<double>::Identity() * (vDesFootWorld[foot] - seResult.vWorld);
-
+  
             Pdes[foot] = pDesFoot[foot];
             IKinbodyframe(statectrl->_biped, QDes[foot], &Pdes[foot], foot);
-            // Vec6<double> vdess = Vec6<double>::Zero();
-            // vdess.block<3, 1>(0, 0) = vDesFoot[foot];
-            // QdDes[foot] = statectrl->data[foot].J_force_moment.inverse() * vdess;
 
-            // Pdes[foot]-=statectrl->_biped.getHip2Location(foot);//转换到髋上
-            // statectrl->commands[foot].qDes = QDes[foot];
-            // statectrl->commands[foot].qdDes = QdDes[foot];
-            // statectrl->commands[foot].pDes = Pdes[foot];
-            // statectrl->commands[foot].vDes = vDesFoot[foot];
         }
         else if (contactState > 0)
         {
@@ -263,50 +263,26 @@ void Checkjoint::checkgait1()
             pDesFoot[foot] = seResult.rBody * (pDesFootWorld[foot] - seResult.position);
             vDesFoot[foot] = seResult.rBody * (vDesFootWorld[foot] - seResult.vWorld);
 
-            //   pDesFoot[foot] = Mat33<double>::Identity() * (pDesFootWorld[foot] - seResult.position);
-            // vDesFoot[foot] = Mat33<double>::Identity()  * (vDesFootWorld[foot] - seResult.vWorld);
-         
+
             Pdes[foot] = pDesFoot[foot];
            
             IKinbodyframe(statectrl->_biped, QDes[foot], &Pdes[foot], foot);
-            // Vec6<double> vdess = Vec6<double>::Zero();
-            // vdess.block<3, 1>(0, 0) = vDesFoot[foot];
-            // QdDes[foot] = statectrl->data[foot].J_force_moment.inverse() * vdess;
 
-            // Pdes[foot]-=statectrl->_biped.getHip2Location(foot);//转换到髋上
-            // statectrl->commands[foot].qDes = QDes[foot];
-            // statectrl->commands[foot].qdDes = QdDes[foot];
-            // statectrl->commands[foot].pDes = Pdes[foot];
-            // statectrl->commands[foot].vDes = vDesFoot[foot];
         }
     }
-    // cout<<"右足 Pdes[foot]世界坐标:\n"<<  Pdes[0]<<'\n';
 
-    // KuanDeg[0] = (float)QDes[0][0];
-    // KuanDeg[1] = (float)QDes[0][1];
-    // Deg[0] = (float)QDes[0][2];
-    // Deg[1] = (float)QDes[0][3];
-    // rj4angle = (float)QDes[0][4];
-    // rj5angle = (float)QDes[0][5];
 
-    // LKuanDeg[0] = (float)QDes[1][0];
-    // LKuanDeg[1] = (float)QDes[1][1];
-    // LDeg[0] = (float)QDes[1][2];
-    // LDeg[1] = (float)QDes[1][3];
-    // lj4angle = (float)QDes[1][4];
-    // lj5angle = (float)QDes[1][5];
-
-    KuanDeg[0] = rad2deg((float)QDes[0][0]);
-    KuanDeg[1] = rad2deg((float)QDes[0][1]);
-    Deg[0] = rad2deg((float)QDes[0][2]);
-    Deg[1] = rad2deg((float)QDes[0][3]);
+    rj0angle = rad2deg((float)QDes[0][0]);
+    rj1angle = rad2deg((float)QDes[0][1]);
+    rj2angle = rad2deg((float)QDes[0][2]);
+    rj3angle = rad2deg((float)QDes[0][3]);
     rj4angle = rad2deg((float)QDes[0][4]);
     rj5angle = rad2deg((float)QDes[0][5]);
 
-    LKuanDeg[0] = rad2deg((float)QDes[1][0]);
-    LKuanDeg[1] = rad2deg((float)QDes[1][1]);
-    LDeg[0] = rad2deg((float)QDes[1][2]);
-    LDeg[1] = rad2deg((float)QDes[1][3]);
+    lj0angle = rad2deg((float)QDes[1][0]);
+    lj1angle = rad2deg((float)QDes[1][1]);
+    lj2angle = rad2deg((float)QDes[1][2]);
+    lj3angle = rad2deg((float)QDes[1][3]);
     lj4angle = rad2deg((float)QDes[1][4]);
     lj5angle = rad2deg((float)QDes[1][5]);
 

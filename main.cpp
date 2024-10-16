@@ -50,7 +50,7 @@
 //#include "datalogger.h"
 #include "Eigen/Dense"
 #include "biped.h"
-
+#include "math/MathUtilities.h"
 //add
 #include "../interface/CheatIO.h"
 #include "../include/checkjoint.h"
@@ -135,6 +135,12 @@ static unsigned int off_bits_0x6000[2] = {1};
 static unsigned int off_bytes_0x6000_1[2] = {1};
 static unsigned int off_bits_0x6000_1[2] = {1};
 
+static unsigned int off_bytes_0x6010[8] = {1};
+static unsigned int off_bits_0x6010[8] = {1};
+
+static unsigned int off_bytes_0x6010_1[2] = {1};
+static unsigned int off_bits_0x6010_1[2] = {1};
+
 static unsigned int off_bytes_0x6000_2[2] = {1};
 static unsigned int off_bits_0x6000_2[2] = {1};
 
@@ -185,7 +191,7 @@ int fd = -1;
 struct sockaddr_in saddr;
 //DataLogger &logger = DataLogger::GET();
 
-LowPassFilter filter;
+//LowPassFilter filter;
 
 float Deg[3];
 float KuanDeg[2];
@@ -193,12 +199,32 @@ float rj4angle = 0, rj5angle = 0,rj3angle=0,rj2angle=0,rj1angle=0,rj0angle=0;
 float LDeg[3];
 float LKuanDeg[2];
 float lj4angle = 0, lj5angle = 0,lj3angle=0,lj2angle=0,lj1angle=0,lj0angle=0;
-
+float Ps=0;
+float P0=0;
+/*
+legpre2:rad
+*/
 float legpre2[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+/*
+legpre2l:mm
+*/
+float legpre2L[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 float legpre1_5[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+
+float *TR_data[12];
+     
+/*
+legpre1:rad
+*/
 float legpre1[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+/*
+legpre1L:油缸长度,mm
+*/
+float legpre1L[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 
 unsigned long SSI[12];
+float PressureA[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+float PressureB[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 
 void check_domain_state(void)
 {
@@ -334,6 +360,8 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         lj4angle = 0;
         lj5angle = 0;
 
+        int press=0;
+
         for (int i = 0; i < 12; i++)
             SSI[i] = 0;
 
@@ -350,44 +378,129 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         SSI[9] = EC_READ_U32(domain_pd + off_bytes_0x6000_4[1]);
         SSI[10] = EC_READ_U32(domain_pd + off_bytes_0x6000_5[0]);
         SSI[11] = EC_READ_U32(domain_pd + off_bytes_0x6000_5[1]);
+
+        for (int i = 0; i < 12; i++)
+        {
+            TR_data[i] = (float *)&SSI[i];
+        }
+
+        PressureA[2]=(float)(EC_READ_U16(domain_pd+off_bytes_0x6010[0]))/65535*10*3;
+        PressureB[2]=(float)(EC_READ_U16(domain_pd+off_bytes_0x6010[1]))/65535*10*3;
+
+        Ps=(float)(EC_READ_U16(domain_pd+off_bytes_0x6010_1[0]));
+        P0=(float)(EC_READ_U16(domain_pd+off_bytes_0x6010_1[1]));
+
+        Ps=Ps/100;
+
+        cout<<"A,B口压力： "<<PressureA[2]<<'\n';
+        cout<<PressureB[2]<<'\n';
+
+        cout<<"PS压力:\n"<<Ps<<'\n';
+        cout<<"P0压力:\n" <<P0<<'\n';
      
         // for (int i = 0; i < 12; i++)
-        //    std::cout<<"编码器"<<i<< SSI[i] <<'\n';
+        //    std::cout<<"编码器"<<i<< SSI[i] <<'\n';zz
 
         if (time)
         {
-            // Deg[1]=15*sin(0.2*M_PI*time+1.5*M_PI);
-            // Deg[0]=15*sin(M_PI*time);
-            // LDeg[0]=3*sin(M_PI*time);
-            // LDeg[2]=15*sin(M_PI*time);
-            rj3angle=20*sin(1*M_PI*time+1.5*M_PI)+20;
+            // Vec6<double> Qt;
+            // Vec3<double> pt(0,0,-0.897);
 
-            legpre2[3]=20*sin(1*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
-            legpre1[3]=20*sin(1*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
-            legpre1_5[3]=20*sin(1*M_PI*(time+0.1)+1.5*M_PI)+20;
+            // bipins.ComputeIK(Qt,pt);
+
+            // cout<<"关节角度"<<Qt<<'\n';
+           // IKinbodyframe(statectrl->_biped, QDes[foot], &Pdes[foot], foot);
+            // if(bipins.AngleInit(rj2angle,rj3angle,rj4angle,lj2angle,lj3angle,lj4angle))
+            // {
+            //     _FSMController->run();
+            // }
+            /** 右腿流量前馈调试
+            rj3angle=20*sin(1*M_PI*time+1.5*M_PI)+20;
+            legpre2[3]=20*sin(1*M_PI*(time+0.5+bipins.sampletime)+1.5*M_PI)+20;
+            legpre1[3]=20*sin(1*M_PI*(time+0.5-bipins.sampletime)+1.5*M_PI)+20;
+            press=0;
+            rj3angle=0;
+            legpre1[3]=0;
+            legpre2[3]=0;
+            rj2angle=15*sin(1*M_PI*time);
+            legpre2[2]=15*sin(1*M_PI*(time+0.1+bipins.sampletime));
+            legpre1[2]=15*sin(1*M_PI*(time+0.1-bipins.sampletime));
+            rj0angle=0*15*sin(0.5*M_PI*time);
+            rj1angle=0*15*sin(0.5*M_PI*time);
+            */
+
+           rj2angle=14*cos(M_PI*time)-14;
+           legpre1[2]=14*cos(M_PI*(time+0.1-bipins.sampletime))-14;
+           legpre2[2]=14*cos(M_PI*(time+0.1+bipins.sampletime))-14;
+
+           legpre1L[2]=bipins.RJ2convert(legpre1[2])*1e-3;
+           legpre2L[2]=bipins.RJ2convert(legpre2[2])*1e-3;
+
+            rj4angle=16.5*cos(M_PI*time)-16.5;
+           legpre1[4]=16.5*cos(M_PI*(time+0.1-bipins.sampletime))-16.5;
+           legpre2[4]=16.5*cos(M_PI*(time+0.1+bipins.sampletime))-16.5;
+
+           rj3angle=-1*(rj2angle+rj4angle);
+           legpre1[3]=-1*(legpre1[2]+legpre1[4]);
+           legpre2[3]=-1*(legpre2[2]+legpre2[4]);
+
+
+
+        //    rj1angle=8*sin(0.5*M_PI*time);
+        //    legpre1[1]=8*sin(0.5*M_PI*(time-bipins.sampletime));
+        //    legpre2[1]=8*sin(0.5*M_PI*(time+bipins.sampletime));
+
+        //    rj0angle=0;
+
+        //    bipins.RJ0RJ1convert(legpre1[0],legpre1[1],legpre1L[0],legpre1L[1]);
+        //    bipins.RJ0RJ1convert(legpre2[0],legpre2[1],legpre2L[0],legpre2L[1]);
+
+        //     rj3angle=20*sin(0.5*M_PI*time+1.5*M_PI)+20;
+        //    legpre1[3]=20*sin(0.5*M_PI*(time+0.1-bipins.sampletime)+1.5*M_PI)+20;
+        //    legpre2[3]=20*sin(0.5*M_PI*(time+0.1+bipins.sampletime)+1.5*M_PI)+20;
+
+
+        
+
+        //    rj5angle=8*sin(0.5*M_PI*time);
+        //    legpre1[5]=8*sin(0.5*M_PI*(time-bipins.sampletime));
+        //    legpre2[5]=8*sin(0.5*M_PI*(time+bipins.sampletime));
+
+        //    legpre1L[3]=bipins.RJ2convert(legpre1[2])*1e-3;
+        //    legpre2L[3]=bipins.RJ2convert(legpre2[2])*1e-3;
+
+
+           
+
+        //    rj4angle=18*cos(0.2*M_PI*time)-18;
+        //     legpre1[4]=18*cos(0.2*M_PI*(time+0.5+bipins.sampletime))-18;
+        //     legpre2[4]=18*cos(0.2*M_PI*(time+0.5-bipins.sampletime))-18;
+        //    rj3angle=-1*(rj2angle+rj4angle);
+        //    legpre1[3]=-1*(legpre1[4]+legpre1[2]);
+        //    legpre2[3]=-1*(legpre2[4]+legpre2[2]);
+
+          //   rj3angle=20*sin(0.5*M_PI*time+1.5*M_PI)+20;
+            // legpre2[3]=20*sin(0.5*M_PI*(time+0.5+bipins.sampletime)+1.5*M_PI)+20;
+            // legpre1[3]=20*sin(0.5*M_PI*(time+0.5-bipins.sampletime)+1.5*M_PI)+20;
+            // rj2angle=15*sin(0.5*M_PI*time);
+            // legpre2[2]=15*sin(0.5*M_PI*(time+0.1+bipins.sampletime));
+            // legpre1[2]=15*sin(0.5*M_PI*(time+0.1-bipins.sampletime));
+
+
            // LDeg[2]=8*sin(0.5*M_PI*time);
            // LDeg[2]=-20;
             // KuanDeg[0] = 2.5 * sin(M_PI * time);
             // rj4angle=-12*sin(M_PI*time);
             //    _FSMController->run();
             //    rj5angle=-10*sin(M_PI*time);
-          //  _FSMController->run();
+          
         }
 
         bipins.computepumpvel(legpre1,legpre2,legpre1_5);
-       // bipins.pumpvelFF=199;
-        cout<<bipins.pumpvelFF;
+       // cout<<bipins.pumpvelFF;
         bipins.pumpvelFF=bipins.pumpvelFF<<16;
-        EC_WRITE_U32(domain_pd +off_bytes_0x7030_1, bipins.pumpvelFF);
-        // Deg[2] = 0;
-        // Deg[1] = 0;
-        // Deg[2] =0* (18 * cos(0.2 * M_PI * time) - 18);
-        // Deg[1] = -1 * (Deg[0] + Deg[2])*0;
-        // P(2)*=-1;
-        // bipins.ComputeIK(RjQ, P);
+       EC_WRITE_U32(domain_pd +off_bytes_0x7030_1, bipins.pumpvelFF);
 
-        // std::cout << "坐标\n"
-        //           << P << '\n';
         
         float RJDES[6];
         float LJDES[6];
@@ -406,16 +519,6 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         // unsigned long ssi[4];
         // std::vector<unsigned long> ssi;
-
-        float *TR_data[12];
-        float fSSI[12];
-        for (int i = 0; i < 12; i++)
-        {
-
-            fSSI[i] = (float)SSI[i];
-            TR_data[i] = &fSSI[i];
-            TR_data[i] = (float *)&SSI[i];
-        }
 
         // for (int i = 0; i < 12; i++)
         //     std::cout << "编码器" << i <<"  "<< *TR_data[i] << '\n';
@@ -447,7 +550,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[0], gang0des);
         PIDInputSet(&PID_ptr_M[0], gang0real); // gang0
         PIDCompute(&PID_ptr_M[0]);
-        FeedforwardAdd(&PID_ptr_M[0], gang0des);
+        FeedforwardAdd(&PID_ptr_M[0], gang0des,true);
 
       
         
@@ -460,7 +563,9 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[1], gang1des);
         PIDInputSet(&PID_ptr_M[1], gang1real); // gang1
         PIDCompute(&PID_ptr_M[1]);
-        FeedforwardAdd(&PID_ptr_M[1], gang1des);
+        FeedforwardAdd(&PID_ptr_M[1], gang1des,true);
+
+        
 
         bipins.LJ0LJ1convert(LJDES[0], LJDES[1], lgang0des, lgang1des);
         bipins.LJ0LJ1convert(*TR_data[6], *TR_data[7], lgang0real, lgang1real);
@@ -474,12 +579,12 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[6], lgang0des);
         PIDInputSet(&PID_ptr_M[6], lgang0real); // gang0
         PIDCompute(&PID_ptr_M[6]);
-        FeedforwardAdd(&PID_ptr_M[6], lgang0des);
+        FeedforwardAdd(&PID_ptr_M[6], lgang0des,true);
 
         PIDSetpointSet(&PID_ptr_M[7], lgang1des);
         PIDInputSet(&PID_ptr_M[7], lgang1real); // gang1
         PIDCompute(&PID_ptr_M[7]);
-        FeedforwardAdd(&PID_ptr_M[7], lgang1des);
+        FeedforwardAdd(&PID_ptr_M[7], lgang1des,true);
 
          // std::cout<<"LJ0PID输出"<<PID_ptr_M[6].output<<'\n';
          //   std::cout<<"LJ1PID输出"<<PID_ptr_M[7].output<<'\n';
@@ -492,16 +597,23 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         float rj2desl = bipins.RJ2convert(RJDES[2]);
         float rj2reall = bipins.RJ2convert(*TR_data[2]);
-        // std::cout<<"期望伸长量"<<rj2desl<<'\n';
-        // std::cout<<"实际伸长量"<<rj2reall<<'\n';
+        //std::cout<<"期望伸长量"<<rj2desl<<'\n';
+      //  std::cout<<"实际伸长量"<<rj2reall<<'\n';
 
         PIDSetpointSet(&PID_ptr_M[2], rj2desl); // RJ2
         PIDInputSet(&PID_ptr_M[2], rj2reall);
         PIDCompute(&PID_ptr_M[2]);
-        FeedforwardAdd(&PID_ptr_M[2], -1 * rj2desl);
+        FeedforwardAdd(&PID_ptr_M[2], -1 * rj2desl,false);
+
+        float u=numderivative(legpre2L[2],legpre1L[2],bipins.sampletime);
+        
+        float ps=Ps;
+        float p0=0;
+        FeedforwardAdd_P(&PID_ptr_M[2],bipins.J2gangW,bipins.J2gangY,ps*1e6,p0,PressureA[2]*1e6,PressureB[2]*1e6,u,10,0.6);
+       // FeedforwardAdd_P(&PID_ptr_M[2],bipins.J2gangW,bipins.J2gangY,ps,p0,14e6,2e6,u,10,-1);
         // logger.rj2des=RJDES[0];
         //  logger.rj2=*TR_data[0];
-        //  std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
+       //  std::cout<<"PID输出"<<PID_ptr_M[2].output<<'\n';
         // logger.pidoutput[2]=PID_ptr_M[2].output;
 
         float lj2desl = bipins.LJ2convert(LJDES[2]);
@@ -512,7 +624,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[8], lj2desl); // RJ2
         PIDInputSet(&PID_ptr_M[8], lj2reall);
         PIDCompute(&PID_ptr_M[8]);
-        FeedforwardAdd(&PID_ptr_M[8],  lj2desl);
+        FeedforwardAdd(&PID_ptr_M[8],  lj2desl,true);
         //PID_ptr_M[8].output=0.5*lj2desl;
 
       //  std::cout<<"LJ2PID输出"<<PID_ptr_M[8].output<<'\n';
@@ -520,14 +632,16 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         float RJ3Ldes = bipins.RJ3Convert(RJDES[3]);
         float RJ3L = bipins.RJ3Convert(*TR_data[3]);
-        PIDSetpointSet(&PID_ptr_M[3], RJDES[3]);
-        PIDInputSet(&PID_ptr_M[3], *TR_data[3]);
+        PIDSetpointSet(&PID_ptr_M[3], RJ3Ldes);
+        PIDInputSet(&PID_ptr_M[3], RJ3L);
         PIDCompute(&PID_ptr_M[3]);
-        FeedforwardAdd(&PID_ptr_M[3], RJ3Ldes);
+        FeedforwardAdd(&PID_ptr_M[3], RJ3Ldes,true);
 
-        std::cout<<"RJ3PID输出"<<PID_ptr_M[3].output<<'\n';
-        std::cout<<"RJ3实际:"<<*TR_data[3]<<'\n';
-        std::cout<<"RJ3期望"<<RJDES[3]<<'\n';
+         std::cout<<"RJ3PID输出"<<PID_ptr_M[3].output<<'\n';
+         std::cout<<"RJ3实际:"<<*TR_data[3]<<'\n';
+         std::cout<<"RJ3期望"<<RJDES[3]<<'\n';
+         std::cout<<"RJ3期望长度"<<RJ3Ldes<<'\n';
+         std::cout<<"RJ3实际长度"<<RJ3L<<'\n';
 
         bipins.RJ4RJ5convert(RJDES[4], RJDES[5], L4des, L5des);
         bipins.RJ4RJ5convert(*TR_data[4], *TR_data[5], L4real, L5real);
@@ -540,13 +654,17 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[4], L4des);
         PIDInputSet(&PID_ptr_M[4], L4real);
         PIDCompute(&PID_ptr_M[4]);
-        FeedforwardAdd(&PID_ptr_M[4], L4des);
+        FeedforwardAdd(&PID_ptr_M[4], L4des,true);
 
         PIDSetpointSet(&PID_ptr_M[5], L5des);
         PIDInputSet(&PID_ptr_M[5], L5real);
         PIDCompute(&PID_ptr_M[5]);
-        FeedforwardAdd(&PID_ptr_M[5], L5des);
+        FeedforwardAdd(&PID_ptr_M[5], L5des,true);
 
+        // bipins.pumpvelFF = bipins.pumpvelFF >> 16;
+        // //bipins.pumpvelFF += bipins.linear_interpolation(PID_ptr_M[3].output) / 1.5 * 1000*press;
+        // bipins.pumpvelFF = bipins.pumpvelFF << 16;
+        // EC_WRITE_U32(domain_pd + off_bytes_0x7030_1, bipins.pumpvelFF);
 
         // logger.rj3des=RJDES[1];
         // logger.rj3=*TR_data[1];
@@ -577,9 +695,16 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // 定义要赋值给 b 的索引
     
 
-//         PID_ptr_M[1].output=5*sin(M_PI*time+1.5*M_PI);
-        // PID_ptr_M[5].output=5*sin(0.1*M_PI*time+1.5*M_PI);
-        // PID_ptr_M[3].output=5*sin(M_PI*time+1.5*M_PI);
+        //  PID_ptr_M[2].output=3;
+        //  PID_ptr_M[0].output=1;
+        //  PID_ptr_M[1].output=2;
+        //  PID_ptr_M[3].output=-3;
+         
+
+        // PID_ptr_M[0].output=5*sin(M_PI*time+1.5*M_PI);
+        // PID_ptr_M[2].output=0.3*sin(M_PI*time);
+        // PID_ptr_M[8].output=0.3*sin(M_PI*time);
+        // PID_ptr_M[3].output=0.3*sin(M_PI*time);
 //  std::cout<<"RJ1PID输出"<<PID_ptr_M[1].output<<'\n';
         int OutIndex[6] = {0, 1, 5, 6, 7, 11};
 
@@ -595,7 +720,7 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
 
         for (int i = 0; i < 12; ++i)
         {
-            output1 = (uint16_t)((PID_ptr_M[i].output+ 10) / 20 * 65536);
+            output1 = (uint16_t)((PID_ptr_M[i].output+ 10) / 20 * 65535);
             if (is_out_index[i])
             {
                 EC_WRITE_U16(domain_pd + off_bytes_0x7010[c_idx++], output1);
@@ -622,8 +747,11 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0],*TR_data[0],*TR_data[2],*TR_data[3],
         // PID_ptr_M[2].alteredKp,PID_ptr_M[2].dispKi,rj2desl,PID_ptr_M[2].FF,PID_ptr_M[2].output);
 
-         sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", LJDES[0], *TR_data[6], LJDES[1],
-                 *TR_data[7],LJDES[2], *TR_data[8],PID_ptr_M[6].output,PID_ptr_M[8].FF,lj2desl,lj2reall);
+        //  sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", *TR_data[0], *TR_data[1], *TR_data[2],
+        //         *TR_data[3],*TR_data[4], *TR_data[5],RJDES[2],RJDES[3],RJDES[4],RJDES[5],(float)PressureA[2],(float)PressureB[2],PID_ptr_M[2].FF,PID_ptr_M[2].FFP,u,Ps);
+
+    sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", *TR_data[0], *TR_data[1], *TR_data[2],
+    *TR_data[3],*TR_data[4], *TR_data[5],RJDES[0],RJDES[1],RJDES[2],RJDES[3],RJDES[4],RJDES[5],Deg[2],LDeg[2],(float)PressureA[2],(float)PressureB[2],PID_ptr_M[2].FF,PID_ptr_M[2].FFP,u,Ps);
 
        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", KuanDeg[0], KuanDeg[1], Deg[0], Deg[1], rj4angle, rj5angle, LKuanDeg[0], LKuanDeg[1], LDeg[0], LDeg[1], lj4angle, lj5angle,Deg[2],LDeg[2]);
 
@@ -857,6 +985,39 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    off_bytes_0x6010[0]=ecrt_slave_config_reg_pdo_entry(sc1, 0x6010, 1, domain, &off_bits_0x6010[0]);//rj2A pressure
+    printf("off_bytes_0x6010_value=0x%x %x\n",off_bytes_0x6010[0],off_bits_0x6010[0]);
+    if (off_bytes_0x6010[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6010[1]=ecrt_slave_config_reg_pdo_entry(sc1, 0x6010, 2, domain, &off_bits_0x6010[1]);//rj2B pressure
+    printf("off_bytes_0x6010_value=0x%x %x\n",off_bytes_0x6010[1],off_bits_0x6010[1]);
+    if (off_bytes_0x6010[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+      off_bytes_0x6010_1[0]=ecrt_slave_config_reg_pdo_entry(sc2, 0x6010, 1, domain, &off_bits_0x6010_1[0]);//rj2A pressure
+    printf("off_bytes_0x6010_value=0x%x %x\n",off_bytes_0x6010_1[0],off_bits_0x6010_1[0]);
+    if (off_bytes_0x6010_1[0] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+    off_bytes_0x6010_1[1]=ecrt_slave_config_reg_pdo_entry(sc2, 0x6010, 2, domain, &off_bits_0x6010_1[1]);//rj2B pressure
+    printf("off_bytes_0x6010_value=0x%x %x\n",off_bytes_0x6010_1[1],off_bits_0x6010_1[1]);
+    if (off_bytes_0x6010_1[1] < 0)
+    {
+        fprintf(stderr, "PDO entry registration failed!\n");
+        return -1;
+    }
+
+
     off_bytes_0x6000_1[0] = ecrt_slave_config_reg_pdo_entry(sc2, 0x6000, 1, domain, &off_bits_0x6000_1[0]);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x6000_1[0], off_bits_0x6000_1[0]);
     if (off_bytes_0x6000_1[0] < 0)
@@ -872,6 +1033,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "PDO entry registration failed!\n");
         return -1;
     }
+
+  
 
     off_bytes_0x7030_1 = ecrt_slave_config_reg_pdo_entry(sc2, 0x7030, 1, domain, &off_bits_0x7030_1);
     printf("off_bytes_0x6000_value=0x%x %x\n", off_bytes_0x7030_1, off_bits_0x7030_1);
@@ -949,7 +1112,7 @@ int main(int argc, char **argv)
 
 
     off_bytes_0x7010[0] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 1, domain, &off_bits_0x7010[0]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[0], off_bits_0x7010[0]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[0], off_bits_0x7010[0]);
     if (off_bytes_0x7010[0] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -957,7 +1120,7 @@ int main(int argc, char **argv)
     }
 
     off_bytes_0x7010[1] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 2, domain, &off_bits_0x7010[1]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[1], off_bits_0x7010[1]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[1], off_bits_0x7010[1]);
     if (off_bytes_0x7010[1] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -965,7 +1128,7 @@ int main(int argc, char **argv)
     }
 
     off_bytes_0x7010[2] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 3, domain, &off_bits_0x7010[2]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[2], off_bits_0x7010[2]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[2], off_bits_0x7010[2]);
     if (off_bytes_0x7010[2] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -973,7 +1136,7 @@ int main(int argc, char **argv)
     }
 
     off_bytes_0x7010[3] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 4, domain, &off_bits_0x7010[3]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[3], off_bits_0x7010[3]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[3], off_bits_0x7010[3]);
     if (off_bytes_0x7010[3] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -981,7 +1144,7 @@ int main(int argc, char **argv)
     }
 
     off_bytes_0x7010[4] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 5, domain, &off_bits_0x7010[4]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[4], off_bits_0x7010[4]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[4], off_bits_0x7010[4]);
     if (off_bytes_0x7010[4] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -989,7 +1152,7 @@ int main(int argc, char **argv)
     }
 
     off_bytes_0x7010[5] = ecrt_slave_config_reg_pdo_entry(sc3, 0x7010, 6, domain, &off_bits_0x7010[5]);
-    printf("off_bytes_0x7011_value=0x%x %x\n", off_bytes_0x7010[5], off_bits_0x7010[5]);
+    printf("off_bytes_0x7010_value=0x%x %x\n", off_bytes_0x7010[5], off_bits_0x7010[5]);
     if (off_bytes_0x7010[5] < 0)
     {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -1082,33 +1245,35 @@ int main(int argc, char **argv)
     const float controltime = 0.01, sampletime = 0.01;
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
-    filter.set(1 / sampletime, 50);
+    //filter.set(1 / sampletime, 50);
     PID_ptr_M = new PIDControl[12];
 
     /*
    PIDK: 0.8,0.2,0,-0.1
    */
-    PIDInit(&PID_ptr_M[0], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
-    // PIDInit(&PID_ptr_M[1], 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[0], 0.6, 0.15, 0, -0.2, controltime, -10, 10, AUTOMATIC, REVERSE);
+    // PIDInit(&PID_ptr_M[1] 0.065, 0, 0.0035, controltime, -10, 10, AUTOMATIC, DIRECT);
     // PIDInit(&PID_ptr_M[2], 0.048, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
 
-    PIDInit(&PID_ptr_M[1], 0.8, 0.2, 0, -0.1, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[1], 0.6, 0.15, 0, -0.2, controltime, -10, 10, AUTOMATIC, REVERSE);
     /*
    PIDK: 0.065,0.024,0,-0.02
+    PIDK1: 0.095, 0.035, 0, -0.06
    */
-    PIDInit(&PID_ptr_M[2], 0.065, 0.024, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[2], 0.097,0.04, 0, 0, controltime, -10, 10, AUTOMATIC, DIRECT);
     /*
     PIDK: 0.06,0.004,0,0.0811
+    PIDKL:0.042, 0.003, 0, 0.025
     */
-    PIDInit(&PID_ptr_M[3], 0.06, 0.004, 0, 0.08, controltime, -10, 10, AUTOMATIC, REVERSE);
+    PIDInit(&PID_ptr_M[3], 0.045, 0.016, 0, 0.027, controltime, -10, 10, AUTOMATIC, DIRECT);
     /*
-     PIDK: 0.4,0,0,0.02
+     PIDK:0.35, 0.05, 0, -0.05 REVERSE 单关节0.25Hz
      */
-    PIDInit(&PID_ptr_M[4], 0.4, 0, 0, 0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[4], 0.35, 0.05, 0, -0.03, controltime, -10, 10, AUTOMATIC, REVERSE);
     /*
-    PIDK: 1.0,0.08,0,0.1
+    PIDK: 1.0,0.08,0,0.1 DIRECT
     */
-    PIDInit(&PID_ptr_M[5], 1, 0.08, 0, 0.1, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[5], 0.9, 0.007, 0, -0.05, controltime, -10, 10, AUTOMATIC, REVERSE);
 
     /*
     PIDK: 0.8,0.2,0,-0.1

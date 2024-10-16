@@ -110,6 +110,8 @@ float  deg2rad(T deg)
 
 }
 
+
+
 template<typename T>
 float numderivative(T f2,T f1, float stime)
 {
@@ -123,12 +125,9 @@ float secondaryderivative(T f3,T f2,T f1, float stime)
   float V1=numderivative(f2,f1,stime);
   float V2=numderivative(f3,f2,stime);
 
-  return (V2-V1)/stime;
+  return (V2-V1)/(2*stime);
 
 }
-
-
-
 
 
 
