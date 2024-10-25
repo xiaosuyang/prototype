@@ -138,14 +138,9 @@ void Checkjoint::checkgait1()
 
         // pFoot[i] = seResult.position + Mat33<double>::Identity() * (statectrl->_biped.getHip2Location(i) +
         //                                                              statectrl->data[i].p);
-
-        cout << "关节位置p" << i << '\n'
-             << statectrl->data[i].q << '\n';
     }
-    cout << "右足世界位置:\n"
-         << pFoot[0] << '\n';
-    cout << "左足世界位置:\n"
-         << pFoot[1] << '\n';
+
+   
 
     Vec3<double> walkspeed(0.5,0,0);
 
@@ -154,25 +149,43 @@ void Checkjoint::checkgait1()
     swingTimes[1] = dtMPC * gait->_swing;
     Vec3<double> Pf[2],Pfstance[2];
     double side_sign[2] = {-1, 1};
+
+    gait->setIterations(iterationsBetweenMPC, iterationCounter);
+    gaitpre->setIterations(iterationsBetweenMPC,iterationCounter+10);
+    
+    Vec2<double> contactStates = gait->getContactSubPhase();
+    Vec2<double> swingStates = gait->getSwingSubPhase();
+
+    Vec2<double> contactStatespre = gaitpre->getContactSubPhase();
+    Vec2<double> swingStatespre = gaitpre->getSwingSubPhase();
+
+    
+
+
     for (int i = 0; i < 2; i++)
     {
-        if (firstSwing[i])
-        {
-            swingTimeRemaining[i] = swingTimes[i];
-        }
-        else
-        {
-            swingTimeRemaining[i] -= dt;
-        }
+        // if (firstSwing[i])
+        // {
+        //     swingTimeRemaining[i] = swingTimes[i];
+        // }
+        // else
+        // {
+        //     swingTimeRemaining[i] -= dt;
+        // }
   
      //   Vec3<double> pRobotFrame = statectrl->_biped.getHip2Location(i);//trunk frame下髋关节位置
        // Pf = seResult.position +seResult.rBody.transpose() * pRobotFrame + walkspeed * swingTimeRemaining[i];
         double pfx_real=walkspeed[0]*0.5*gait->_stance*dtMPC;
-        Pf[i][0]=0;
+      //  Pf[i][0]=0.1;
         Pf[i][1]= side_sign[i]*statectrl->_biped.leg_offset_y*0.9;
-        Pf[i][2] = seResult.position[2] -0.8697+statectrl->_biped.leg_offset_z;
+        std::cout<<"legoffsetY"<<statectrl->_biped.leg_offset_y<<'\n';
+        std::cout<<"Y方向"<<i<<":"<<Pf[i][1]<<'\n';
+      
+       //Pf[i][1]=0;
+        //Pf[i][2] = seResult.position[2] -0.8697+statectrl->_biped.leg_offset_z;
+        Pf[i][2]=-1.1023;
 
-
+        Pf[i][0]=footxnow[i];
 
         // Pf[i][2]=0-0.894+statectrl->_biped.leg_offset_z;
 
@@ -180,12 +193,23 @@ void Checkjoint::checkgait1()
         //  << seResult.position << '\n';
 
         Pfstance[i]=Pf[i];
-        Pfstance[i][0]*=-1;
-        
+       // Pfstance[i][0]*=-1;
+
+        if(swingStates(i)>0)
+        {
+            Pfstance[i][0]=footxnow[i];
+            Pf[i][0]=footxnext[i];
+        }
+        else
+        {
+            Pfstance[i][0]=footxnext[i];
+            Pf[i][0]=footxnow[i];
+
+        }
 
 
         footSwingTrajectories[i].setHeight(0.1);
-        footSwingTrajectories[i].setFinalPosition(Pf[i]);
+     //   footSwingTrajectories[i].setFinalPosition(Pf[i]);
     }
 
     // Mat33<double> Kp;
@@ -196,15 +220,6 @@ void Checkjoint::checkgait1()
     // Kd << 2, 0, 0,
     //     0, 2, 0,
     //     0, 0, 2;
-
-    gait->setIterations(iterationsBetweenMPC, iterationCounter);
-    gaitpre->setIterations(iterationsBetweenMPC,iterationCounter+10);
-    
-    Vec2<double> contactStates = gait->getContactSubPhase();
-    Vec2<double> swingStates = gait->getSwingSubPhase();
-
-    Vec2<double> contactStatespre = gaitpre->getContactSubPhase();
-    Vec2<double> swingStatespre = gaitpre->getSwingSubPhase();
 
     
 
@@ -219,6 +234,7 @@ void Checkjoint::checkgait1()
     // statectrl->commands[0].kdCartesian = Kd;
     // statectrl->commands[1].kpCartesian = Kp;
     // statectrl->commands[1].kdCartesian = Kd;
+    ifswing= swingStates(0);
 
 
     for (int foot = 0; foot < 2; foot++)
@@ -232,8 +248,18 @@ void Checkjoint::checkgait1()
             if (firstSwing[foot])
             {
                 firstSwing[foot] = false;
-                footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+                if(!firstRun)
+                {
+                    footxnow[foot]=footxnext[foot];
+                footxnext[foot]*=-1;
+                Pfstance[foot][0]=footxnow[foot];
+                Pf[foot][0]=footxnext[foot];
+                }
+                
+
+                footSwingTrajectories[foot].setInitialPosition(Pfstance[foot]);
             }
+             footSwingTrajectories[foot].setFinalPosition(Pf[foot]);
             footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
             pDesFootWorld[foot] = footSwingTrajectories[foot].getPosition().cast<double>();
@@ -251,7 +277,20 @@ void Checkjoint::checkgait1()
             if(firstSwing[foot]==false)
             {
                 firstSwing[foot] = true;
-                footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+                if(!firstRun)
+                {
+                footxnow[foot]=footxnext[foot];
+                footxnext[foot]*=-1;
+                Pfstance[foot][0]=footxnext[foot];
+                Pf[foot][0]=footxnow[foot];
+                }
+
+                
+
+                footSwingTrajectories[foot].setInitialPosition(Pf[foot]);
+                // footxnow[foot]=footxnext[foot];
+                // footxnext[foot]*=-1;
+           
             }
             footSwingTrajectories[foot].setFinalPosition(Pfstance[foot]);
 
@@ -271,6 +310,11 @@ void Checkjoint::checkgait1()
         }
     }
 
+    if(firstRun)
+    {
+        firstRun=false;
+    }
+
 
     rj0angle = rad2deg((float)QDes[0][0]);
     rj1angle = rad2deg((float)QDes[0][1]);
@@ -287,7 +331,11 @@ void Checkjoint::checkgait1()
     lj5angle = rad2deg((float)QDes[1][5]);
 
     Deg[2] = Pdes[0][2];//足部位置Z
+    Deg[1]=Pdes[0][1];
+    Deg[0]=Pdes[0][0];
     LDeg[2] = Pdes[1][2];
+    LDeg[1]=Pdes[1][1];
+    LDeg[0]=Pdes[1][0];
 
     // plot_publish(0,footSwingTrajectories[0].getPosition()[0]);
     // plot_publish(1, footSwingTrajectories[0].getPosition()[1]);

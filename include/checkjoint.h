@@ -13,7 +13,7 @@
 #include "FootSwingTrajectory.h"
 #include "StateEstimatorContainer.h"
 
-
+extern float ifswing;
 extern float Deg[3];
 extern float KuanDeg[2];
 extern float rj0angle,rj1angle,rj2angle,rj3angle,rj4angle, rj5angle;
@@ -147,7 +147,7 @@ public:
     double dtMPC;
     bool firstRun = true;
     Vec3<double> world_position_desired;
-    int iterationCounter = 0;
+    int iterationCounter = 1;
     Vec3<double> pFoot[2];
     LowlevelCmd *_lowCmd;
     LowlevelState *_lowState;
@@ -161,12 +161,16 @@ public:
     Vec3<double> pDesFoot[2] ;
     Vec3<double> vDesFoot[2] ;
 
-    bool firstSwing[2] = {true, true};
+    bool firstSwing[2] = {false, true};
 
-      bool firstSwingpre[2] = {true, true};
+    bool firstSwingpre[2] = {true, true};
+    bool startwalk=false;
+    float footxnow[2]={0,0};
+    float footxnext[2]={0.1,-0.1};
     
     double swingTimeRemaining[2];
     float qdes=0;
+    int walktimes=0;
     short up=1;
 };
 
