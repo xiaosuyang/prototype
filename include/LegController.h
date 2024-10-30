@@ -112,16 +112,16 @@ SOFTWARE.
 
     void IKinbodyframe(Biped& _biped,Vec6<double>&q,Vec3<double>* p,int leg,Mat33<double> R=Mat33<double>::Identity());
 
-    template<typename T>
-    float sign(T num)
-    {
-        if(num>0)
-        return 1;
-        else if(num<0)
-        return -1;
-        else
-        return 0;
+    // template<typename T>
+    // float sign(T num)
+    // {
+    //     if(num>0)
+    //     return 1;
+    //     else if(num<0)
+    //     return -1;
+    //     else
+    //     return 0;
 
-    }
+    // }
 
 #endif

@@ -58,6 +58,7 @@ void PIDInit(PIDControl *pid, float kp, float ki, float kd,float KS,
     pid->lastInput = 0.0f;
     pid->output = 0.0f;
     pid->setpoint = 0.0f;
+    pid->lastsetpoint=0.0f;
     pid->Ks=KS;
     if(sampleTimeSeconds > 0.0f)
     {
@@ -103,6 +104,9 @@ PIDCompute(PIDControl *pid)
     
     // Make the current input the former input
     pid->lastInput = pid->input;
+
+  //  pid->desiredvel=pid->input-pid->lastInput;
+    pid->desiredDelta=pid->setpoint-pid->lastsetpoint;
     
     return true;
 }
@@ -226,10 +230,10 @@ PIDSampleTimeSet(PIDControl *pid, float sampleTimeSeconds)
 bool FeedforwardAdd(PIDControl *pid,float input,bool flag)
 {
  
-  pid->FF=1*pid->Ks*(input-pid->FFlastinput)/pid->sampleTime;
+  pid->FF=1*pid->Ks*(pid->desiredDelta)/pid->sampleTime;
   //std::cout<<"PIDFF:\n";
   //std::cout<<pid->FF<<'\n';
-  pid->FFlastinput=input;
+ // pid->FFlastinput=input;
    //printf("前馈值%f\n",FF);
    if(flag)
    {
@@ -252,6 +256,7 @@ bool FeedforwardAdd_P(PIDControl *pid,float A1,float A2,float ps,float p0,float 
     float Kv=Qn/(In*sqrt(Pn));
 
     float Id1=0,Id2=0;
+
 
     if(u1>=0)
     {
@@ -287,7 +292,11 @@ bool FeedforwardAdd_P(PIDControl *pid,float A1,float A2,float ps,float p0,float 
 }
 
 void 
-PIDSetpointSet(PIDControl *pid, float setpoint) { pid->setpoint = setpoint; }
+PIDSetpointSet(PIDControl *pid, float setpoint)
+ { 
+    pid->lastsetpoint=pid->setpoint;
+    pid->setpoint = setpoint;
+}
 
 // 
 // PID Input Set

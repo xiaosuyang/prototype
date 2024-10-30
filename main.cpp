@@ -47,6 +47,7 @@
 #include "ecrt.h"
 #include "pid_controller.h"
 #include "interface/cmdpanel.h"
+#include "fuzzy_pid.h"
 //#include "datalogger.h"
 #include "Eigen/Dense"
 #include "biped.h"
@@ -71,7 +72,8 @@
 #define CONFIGURE_PDOS 1
 
 #define BIGNUM 100000000.0
-PIDControl *PID_ptr_M; // 矢状面3关节，j2,j3,j4;
+PIDControl *PID_ptr_M; // 
+fuzzypid *FPID_ptr;
 int sock;
 struct sockaddr_in server;
 char message[1000];
@@ -636,14 +638,19 @@ void cyclic_task(Biped &bipins, float time,FSM* _FSMController)
         PIDSetpointSet(&PID_ptr_M[2], rj2desl); // RJ2
         PIDInputSet(&PID_ptr_M[2], rj2reall);
         PIDCompute(&PID_ptr_M[2]);
-        FeedforwardAdd(&PID_ptr_M[2], -1 * rj2desl,true);
+        FeedforwardAdd(&PID_ptr_M[2], rj2desl,true);
 
         float u=numderivative(legpre2L[2],legpre1L[2],bipins.sampletime);
         
         float ps=Ps;
         float p0=0;
       //  FeedforwardAdd_P(&PID_ptr_M[2],bipins.J2gangW,bipins.J2gangY,ps*1e6,p0,PressureA[2]*1e6,PressureB[2]*1e6,u,10,1);
+        FPID_ptr[2].setpointset(rj2desl);
+        FPID_ptr[2].inputset(rj2reall);
+        FPID_ptr[2].PIDcompute();
+        FPID_ptr[2].FeedforwardAdd(true);
 
+        PID_ptr_M[2].output=FPID_ptr[2].output;
 
         float lj2desl = bipins.LJ2convert(LJDES[2]);
         float lj2reall = bipins.LJ2convert(*TR_data[8]);
@@ -812,7 +819,7 @@ int main(int argc, char **argv)
     StateEstimatorContainer *stateEstimator = new StateEstimatorContainer(state,
                                                                           Legctrlptr->data,
                                                                           &stateEstimate);
-
+    
     stateEstimator->addEstimator<CheaterOrientationEstimator>();
     stateEstimator->addEstimator<CheaterPositionVelocityEstimator>();
 
@@ -1249,7 +1256,9 @@ int main(int argc, char **argv)
     // pid_ptr = (PIDControl*)malloc(sizeof(PIDControl));
     // PIDInit(pid_ptr,Kp,Kd,0,0.02,-10,10,AUTOMATIC,DIRECT);
     //filter.set(1 / sampletime, 50);
-    PID_ptr_M = new PIDControl[12];
+    PID_ptr_M = new PIDControl[12]; 
+    FPID_ptr=new fuzzypid [12];
+
 
     /*
    PIDK: 0.8,0.2,0,-0.1
@@ -1263,7 +1272,10 @@ int main(int argc, char **argv)
    PIDK: 0.065,0.024,0,-0.02
     PIDK1: 0.097,0.04
    */
-    PIDInit(&PID_ptr_M[2], 0.097,0.04, 0, -0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[2], 0.097,0.04, 0, 0.02, controltime, -10, 10, AUTOMATIC, DIRECT);
+
+    FPID_ptr[2].fuzzypid_init(0.09,0.025,0.02,controltime,F_DIRECT);
+    FPID_ptr[2].Fuzzyset(0.01,-0.01,0.005,-0.005,2.5,-2.5);
     /*
     PIDK: 0.06,0.004,0,0.0811
     PIDKL:0.045, 0.016, 0, 0.027

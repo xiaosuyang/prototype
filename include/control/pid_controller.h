@@ -132,6 +132,7 @@ typedef struct
     // The user chosen operating point
     // 
     float setpoint;
+    float lastsetpoint;
     
     // 
     // The sense of direction of the controller
@@ -139,6 +140,8 @@ typedef struct
     // REVERSE: A positive setpoint gives a negative output
     // 
     PIDDirection controllerDirection;
+
+    float desiredDelta;
     
     // 
     // Tells how the controller should respond if the user has
@@ -197,6 +200,7 @@ extern bool PIDCompute(PIDControl *pid);
 /*
 手调前馈
 */
+
 extern bool FeedforwardAdd(PIDControl *pid,float input,bool flag);
 
 bool FeedforwardAdd_P(PIDControl *pid,float A1,float A2,float ps,float p0,float p1, float p2,float u1,float In,float Gain);
