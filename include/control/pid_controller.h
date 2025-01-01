@@ -119,6 +119,8 @@ typedef struct
     // will be called
     // 
     float sampleTime;
+
+    float Error1;
     
     // 
     // The values that the output will be constrained to

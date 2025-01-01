@@ -12,14 +12,14 @@
 #include "../interface/LowlevelState.h"
 #include "FootSwingTrajectory.h"
 #include "StateEstimatorContainer.h"
+#include "lip3d.h"
 
-extern float ifswing;
-extern float Deg[3];
-extern float KuanDeg[2];
-extern float rj0angle,rj1angle,rj2angle,rj3angle,rj4angle, rj5angle;
-extern float LDeg[3];
-extern float LKuanDeg[2];
-extern float lj0angle,lj1angle,lj2angle,lj3angle,lj4angle, lj5angle;
+#define zmpSx 0.15
+#define zmpSy 0.25
+#define PREVIEWNUM 10
+
+
+using namespace Eigen;
 
 
 enum JOINT
@@ -49,10 +49,27 @@ public:
     {
         for(int i=0;i<2;i++) statectrl->data[i].zero();
         walking=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
-        walkpre=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
+        float para=0.5;
+        walkzmp=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
+        zmppre=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
+        gaitsquat=new Gait(60*2, Vec2<int>(0, 50*2), Vec2<int>(2*10, 2*50), "Walking");
+
+        for(int i=0;i<PREVIEWNUM;i++)
+        {
+            walkzmp->setIterations(iterationsBetweenMPC,iterationCounter+i);
+            float thephase=walkzmp->_phase;
+            lastphaselist[i]=thephase;
+            Iterlist[i]=0;
+            xreflist[i]=0;
+            yreflist[i]=0;
+        }
+
+        dymodelx=new LIP3d(PREVIEWNUM);
+        dymodely=new LIP3d(PREVIEWNUM);
         dtMPC = dt * iterationsBetweenMPC;
         _lowCmd=cmdex;
         _lowState=statex;
+
         // plotsub[0]=_nc.advertise<std_msgs::Float32>( "plot1", 10);
         // plotsub[1]=_nc.advertise<std_msgs::Float32>( "plot2", 10);
         // plotsub[2]=_nc.advertise<std_msgs::Float32>( "plot3", 10);
@@ -64,12 +81,23 @@ public:
     {
         // _lowCmd=nullptr;
         // _lowState=nullptr;
+        delete walking;
+        delete walkzmp;
+        delete gaitsquat;
+        delete dymodelx;
+        delete dymodely;
         _lowCmd = NULL;
         _lowState = NULL;
     }
     void checkgait();
 
     void checkgait1();
+
+    void squat();
+
+    void zmpgenerate(int deltapre);
+
+    void zmpwalk();
 
     void staystill()
     {
@@ -138,8 +166,13 @@ public:
 
     // ros::NodeHandle _nc;
     // std::array<ros::Publisher,3>  plotsub;
+    LIP3d* dymodelx;
+    LIP3d* dymodely;
+
     Gait* walking;
-    Gait* walkpre;
+    Gait* walkzmp;
+    Gait* gaitsquat;
+    Gait * zmppre;
     int iterationsBetweenMPC=4;
     int horizonLength=30;
     FootSwingTrajectory<double> footSwingTrajectories[2];
@@ -166,12 +199,35 @@ public:
     bool firstSwingpre[2] = {true, true};
     bool startwalk=false;
     float footxnow[2]={0,0};
-    float footxnext[2]={0.1,-0.1};
+    float footxnext[2]={-0.1,0.1};
+    float footxnextsquat[2]={0,0};
+
+    float zmpxposref[7]={0,0,zmpSx,2*zmpSx,3*zmpSx,4*zmpSx,5*zmpSx};
+    float zmpyposref[7]={0,zmpSy,-zmpSy,zmpSy,-zmpSy,zmpSy,-zmpSy};
+    const short totalstep=7;
     
     double swingTimeRemaining[2];
     float qdes=0;
     int walktimes=0;
     short up=1;
+   // int previewnum=50;
+
+    float sum_ex=0;
+    float sum_ey=0;
+
+    float zmpChangep=0.1;
+ //   float * Lastphaselist;
+
+    float lastphaselist[PREVIEWNUM];
+    //int * Iterlist;
+    int  Iterlist[PREVIEWNUM];
+    //float * xreflist;
+
+    float xreflist[PREVIEWNUM];
+    //float * yreflist;
+    float yreflist[PREVIEWNUM];
+
+
 };
 
 #endif

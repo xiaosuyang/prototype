@@ -63,6 +63,9 @@ void KeyBoard::changeValue(){
     case 't':case 'T':
          uservalue.Starttime=true;
         break;
+    case 'p':case 'P':
+        uservalue.Settime=true;
+        break;
     default:
         break;
     }

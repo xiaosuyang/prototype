@@ -33,6 +33,8 @@ SOFTWARE.
 #include <Eigen/Dense>
 #include <cmath>
 
+
+
 class LowPassFilter
 {
 public:
@@ -142,5 +144,8 @@ struct Point
   double x;
   double y;
 };
+
+Eigen::MatrixXf Matrix_Pow(Eigen::MatrixXf Mat, size_t n);
+
 
 #endif // PROJECT_MATHUTILITIES_H

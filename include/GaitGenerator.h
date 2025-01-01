@@ -35,7 +35,7 @@ public:
   int _swing;
 
 
-private:
+
   int _nMPC_segments;
   int* _mpc_table;
   Array2i _offsets;           // offset in mpc segments

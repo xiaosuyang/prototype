@@ -78,7 +78,8 @@ public:
     float timer;
     float rlacc;
     float rlspeed;
-    bool AngleInit(float &rj2, float &rj3, float &rj4, float &lj2, float &lj3, float &lj4);
+    bool AngleInit(float &rj1,float &rj2, float &rj3, float &rj4,float &rj5 ,
+float &lj1,float &lj2, float &lj3, float &lj4,float &lj5);
 
     // const std::vector<Point> points = {
     //     {-1, 0},

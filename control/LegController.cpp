@@ -343,5 +343,5 @@ void computeIK(Biped& _biped,Vec6<double>&q,Vec3<double>* p,int leg,Mat33<double
     r=*p-pbiped;
     // std::cout<<"IKinbodyframe,r:\n"<<r<<'\n';
     computeIK(_biped,q,&r,leg,R);
-    std::cout<<"关节角度q"<<leg<<":\n"<<q<<'\n';
+   // std::cout<<"关节角度q"<<leg<<":\n"<<q<<'\n';
  }

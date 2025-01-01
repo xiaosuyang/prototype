@@ -16,6 +16,7 @@ struct UserValue
 {
     float direction=0;
     bool Starttime=false;
+    bool Settime=false;
 
     float lx;
     float ly;

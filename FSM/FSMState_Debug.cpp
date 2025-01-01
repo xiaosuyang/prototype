@@ -9,8 +9,9 @@ void FSMState_Debug::run()
 {
     _data->_legController->updateData(_data->_lowState);
     _data->_stateEstimator->run(); 
-    
-    runobject.checkgait1();
+  // runobject.squat(); 
+    //runobject.checkgait1();
+    runobject.zmpwalk();
    // runobject.staystill();
 
     // _data->_legController->updateCommand(_data->_lowCmd); 

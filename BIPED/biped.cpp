@@ -92,19 +92,25 @@ void Biped::LJ4LJ5convert(float DEG_4, float DEG_5, float &L4, float &L5)
     L5 = W_AB.norm() - AB_initial.norm();
 }
 
-bool Biped::AngleInit(float &rj2, float &rj3, float &rj4, float &lj2, float &lj3, float &lj4)
+bool Biped::AngleInit(float &rj1,float &rj2, float &rj3, float &rj4,float &rj5 ,
+float &lj1,float &lj2, float &lj3, float &lj4,float &lj5)
 {
     if (timer > 2)
     {
+        // rj1=1.11;
+        // rj5=-1.11;
+
+        
         rj2 = lj2 = rad2deg(Initialq[2]);
         rj3 = lj3 = rad2deg(Initialq[3]);
         rj4 = lj4 = rad2deg(Initialq[4]);
         return true;
     }
+   // lj1=rj1=timer/2*1.11;
     rj2 = lj2 = timer / 2 * rad2deg(Initialq[2]);
     rj3 = lj3 = timer / 2 * rad2deg(Initialq[3]);
     rj4 = lj4 = timer / 2 * rad2deg(Initialq[4]);
-
+    //rj5=lj5=timer/2*(-1.11);
     timer += sampletime;
     return false;
 }
@@ -136,6 +142,7 @@ void Biped::computepumpvel(float jointdeg1[])
     RJ4RJ5convert(RJ4v2, RJ5v2, RL4v2, RL5v2);
     
     RL0v2 *= 1e-3;
+    RL0v1*=1e-3;
     RL1v1 *= 1e-3;
     RL1v2 *= 1e-3;
     RL2v1 *= 1e-3;
@@ -149,12 +156,21 @@ void Biped::computepumpvel(float jointdeg1[])
 
     flowrate = 0;
 
-    float RL0speed = numderivative(RL0v2, RL0v1, sampletime*0.5);
+     float RL0speed = numderivative(RL0v2, RL0v1, sampletime*0.5);
     float RL1speed = numderivative(RL1v2, RL1v1, sampletime*0.5);
     float RL2speed = numderivative(RL2v2, RL2v1, sampletime*0.5);
     float RL3speed = numderivative(RL3v2, RL3v1, sampletime*0.5);
     float RL4speed = numderivative(RL4v2, RL4v1, sampletime*0.5);
     float RL5speed = numderivative(RL5v2, RL5v1, sampletime*0.5);
+    
+//   std::cout<<"rlspeed"<<RL0speed<<'\n';
+//     std::cout<<"rlspeed"<<RL1speed<<'\n';
+//     std::cout<<"rlspeed"<<RL2speed<<'\n';
+//     std::cout<<"rlspeed"<<RL3speed<<'\n';
+//     std::cout<<"rlspeed"<<RL4speed<<'\n';
+
+// std::cout<<"rlspeed"<<RL5speed<<'\n';
+
 
     // float RL3acc=secondaryderivative(RL3v2,RL3v1_5,RL3v1,sampletime);
 

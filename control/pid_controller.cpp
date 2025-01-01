@@ -86,6 +86,8 @@ PIDCompute(PIDControl *pid)
     
     // The classic PID error term
     error = (pid->setpoint) - (pid->input);
+
+    pid->Error1=error;
     
     // Compute the integral term separately ahead of time
     pid->iTerm += (pid->alteredKi) * error;

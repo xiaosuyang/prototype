@@ -45,6 +45,7 @@ include_directories(${INCLUDE_DIRS}
 
 file(GLOB_RECURSE SRC_FILE "*.cpp")
 file(GLOB_RECURSE BUILD_CPP_FILES "build/*.cpp")
+
 list(REMOVE_ITEM SRC_FILE ${BUILD_CPP_FILES})
 foreach(file ${SRC_FILE})
     message(STATUS "${file}")
