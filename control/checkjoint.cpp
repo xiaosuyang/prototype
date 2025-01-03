@@ -1,14 +1,12 @@
 #include "../include/checkjoint.h"
 
-
-
 extern float ifswing;
 extern float Deg[3];
 extern float KuanDeg[2];
-extern float rj0angle,rj1angle,rj2angle,rj3angle,rj4angle, rj5angle;
+extern float rj0angle, rj1angle, rj2angle, rj3angle, rj4angle, rj5angle;
 extern float LDeg[3];
 extern float LKuanDeg[2];
-extern float lj0angle,lj1angle,lj2angle,lj3angle,lj4angle, lj5angle;
+extern float lj0angle, lj1angle, lj2angle, lj3angle, lj4angle, lj5angle;
 extern float zmpscope[4];
 extern float cphasescope[2];
 extern float walkphase;
@@ -16,7 +14,7 @@ extern float dyx;
 extern float dyy;
 extern float uxx;
 extern float uyy;
-
+extern float rlegswingphase,rlegcontactphase;
 
 // void Checkjoint::checkgait()
 // {
@@ -142,48 +140,109 @@ extern float uyy;
 
 // }
 
-void Checkjoint::zmpgenerate(int deltapre)//deltapre:0~previewnum-1
+void Checkjoint::zmpgenerate(int deltapre) // deltapre:0~previewnum-1
 {
-    int iterpre=iterationCounter+deltapre;
-    zmppre->setIterations(iterationsBetweenMPC,iterpre);
-    float thisphase=zmppre->_phase;
-    float lastphase=lastphaselist[deltapre];
+    int iterpre = iterationCounter + deltapre;
+    zmppre->setIterations(iterationsBetweenMPC, iterpre);
+    float thisphase = zmppre->_phase;
+    float lastphase = lastphaselist[deltapre];
 
-    if(thisphase<lastphase)
+    if (thisphase < lastphase)
         Iterlist[deltapre]++;
 
-    int Iter=Iterlist[deltapre];
+    int Iter = Iterlist[deltapre];
 
-    if (Iter > 0 && thisphase > 5e-3 && thisphase< zmpChangep+1e-3 && Iter < totalstep)
+    if (Iter > 0 && thisphase > 5e-3 && thisphase < zmpChangep + 1e-3 && Iter < totalstep)
     {
 
-        if(thisphase>zmpChangep) thisphase=zmpChangep;
-        float cphase = thisphase/ zmpChangep;
-        xreflist[deltapre]= zmpxposref[Iter - 1] * (1 - cphase) + zmpxposref[Iter] * cphase;
+        if (thisphase > zmpChangep)
+            thisphase = zmpChangep;
+        float cphase = thisphase / zmpChangep;
+        xreflist[deltapre] = zmpxposref[Iter - 1] * (1 - cphase) + zmpxposref[Iter] * cphase;
         yreflist[deltapre] = zmpyposref[Iter - 1] * (1 - cphase) + zmpyposref[Iter] * cphase;
     }
-   
-     lastphaselist[deltapre]=thisphase;
+
+    lastphaselist[deltapre] = thisphase;
+    
+}
+
+void Checkjoint::zmpLegphasecompute()
+{
+    static int legphasecounter=1;
+    if (Iter < 1)
+    {
+    }
+    else
+    {
+        zmpfoot->setIterations(iterationsBetweenMPC, legphasecounter);
+        Vec2<double> contactStates = zmpfoot->getContactSubPhase();
+        Vec2<double> swingStates = zmpfoot->getSwingSubPhase();
+        legphasecounter++;
+
+        rlegswingphase=swingStates[0];
+        rlegcontactphase=contactStates[0];
+
+        Vec3<double> Pf[2], Pfstance[2];
+        double side_sign[2] = {-1, 1};
+
+        for(int i=0;i<2;i++)
+        {
+            Pf[i][1]=side_sign[i]*statectrl->_biped.leg_offset_y*0.9;
+            Pf[i][2]=-1.12;
+
+            int nextposindex=Iter+1;
+            if(nextposindex<totalstep)
+                Pf[i][1]=zmpxposref[nextposindex];
+            
+
+
+
+
+            //footSwingTrajectories[i].setHeight(0.055);
+        }
+
+        
+
+        // for (int i = 0; i < 2; i++)
+        // {
+
+        //     Pf[i][1] = side_sign[i] * statectrl->_biped.leg_offset_y;
+        //     Pf[i][2] = -1.1294;
+  
+        //     Pfstance[i] = Pf[i];
+
+        //     if (swingStates(i) > 0)
+        //     {
+        //         Pfstance[i][0] = footxnow[i];
+        //         Pf[i][0] = footxnextsquat[i];
+        //     }
+        //     else
+        //     {
+        //         Pfstance[i][0] = footxnextsquat[i];
+        //         Pf[i][0] = footxnow[i];
+        //     }
+
+        //     footSwingTrajectories[i].setHeight(0.065);
+
+        // }
+    }
 }
 
 void Checkjoint::zmpwalk()
 {
     Gait *gait = walkzmp;
     static int zmpstep = 0;
-    static float lastphase=0;
-    // static float xref = 0;
-    // static float yref = 0;
-
+    static float lastphase = 0;
     gait->setIterations(iterationsBetweenMPC, iterationCounter);
     iterationCounter++;
-    static int Iter = 0;
+    // static int Iter = 0;
 
     // // if ((1 - lastphase) < 1e-2 && gait->_phase < 1e-2)
     // //     Iter++;
-    if ( gait->_phase < lastphase)
+    if (gait->_phase < lastphase)
         Iter++;
 
-    for(int i=0;i<PREVIEWNUM;i++)
+    for (int i = 0; i < PREVIEWNUM; i++)
     {
         zmpgenerate(i);
     }
@@ -193,89 +252,26 @@ void Checkjoint::zmpwalk()
     zmpxpreview.resize(PREVIEWNUM, 1);
     zmpypreview.resize(PREVIEWNUM, 1);
 
-    std::cout<<"xref:\n"<<'\n';
+    std::cout << "xref:\n"
+              << '\n';
 
-    for(int i=0;i<PREVIEWNUM;i++)
+    for (int i = 0; i < PREVIEWNUM; i++)
     {
-        zmpxpreview(i,0)=xreflist[i];
-        zmpypreview(i,0)=yreflist[i];
-        std::cout<<zmpxpreview<<'\n';
+        zmpxpreview(i, 0) = xreflist[i];
+        zmpypreview(i, 0) = yreflist[i];
+        // std::cout<<zmpxpreview(i,0)<<'\n';
     }
 
     zmpscope[0] = xreflist[0];
     zmpscope[1] = yreflist[0];
-    zmpscope[2]=xreflist[PREVIEWNUM-1];
-    zmpscope[3]=yreflist[PREVIEWNUM-1];
+    zmpscope[2] = xreflist[PREVIEWNUM - 1];
+    zmpscope[3] = yreflist[PREVIEWNUM - 1];
 
-    // walkphase=gait->_phase;
+    walkphase = gait->_phase;
 
-    // cphasescope[0]=0;
-    // cphasescope[1]=0;
+    lastphase = gait->_phase;
 
-    // if (Iter > 0 && gait->_phase > 5e-3 && gait->_phase < zmpChangep+1e-3 && Iter < totalstep)
-    // {
-    //     float gphase=gait->_phase;
-    //     if(gphase>zmpChangep) gphase=zmpChangep;
-    //     float cphase = gphase/ zmpChangep;
-    //     cphasescope[0]=cphase;
-    //     xref = zmpxposref[Iter - 1] * (1 - cphase) + zmpxposref[Iter] * cphase;
-    //     yref = zmpyposref[Iter - 1] * (1 - cphase) + zmpyposref[Iter] * cphase;
-    // }
-
-    // MatrixXf zmpxpreview;
-    // MatrixXf zmpypreview;
-
-    // zmpxpreview.resize(previewnum, 1);
-    // zmpypreview.resize(previewnum, 1);
-
-    // int Iterpre = Iter;
-    // float previewphase = gait->_phase;
-    // float lastprephase = previewphase;
-
-    // static float xrefpre=0;
-    // static float yrefpre=0;
-
-    // float phasetime = iterationsBetweenMPC * gait->_nIterations * dt;
-    // bool flag = true;
-
-    // for (int i = 0; i < previewnum; i++)
-    // {
-    //    // xrefpre = zmpxpreview(i, 0);
-    //     //yrefpre = zmpypreview(i, 0);
-    //     float deltaphase = i * dt / phasetime;
-    //     previewphase = fmod( gait->_phase+ deltaphase, 1);
-    //     if (previewphase < lastprephase && flag)
-    //     {
-    //         Iterpre++;
-    //         flag = false;
-    //     }
-
-    //    // if(i==9) cphasescope[1]=deltaphase;
-    //     if (Iterpre > 0 && previewphase > 5e-3 && previewphase < zmpChangep+1e-2 && Iterpre < totalstep)
-    //     {
-    //         float pgphase=previewphase;
-    //         if(pgphase>zmpChangep) pgphase=zmpChangep;
-    //         float cphase = pgphase/ zmpChangep;
-    //        // if(i==9) cphasescope[1]=cphase;
-    //         xrefpre = zmpxposref[Iterpre - 1] * (1 - cphase) + zmpxposref[Iterpre] * cphase;
-    //         yrefpre = zmpyposref[Iterpre - 1] * (1 - cphase) + zmpyposref[Iterpre] * cphase;
-    //     }    
-
-    //     zmpxpreview(i, 0) = xrefpre;
-    //     zmpypreview(i, 0) = yrefpre;
-    // }
-    // zmpscope[2] = zmpxpreview(previewnum-1, 0);
-    // zmpscope[3] = zmpypreview(previewnum-1, 0);
-
-     lastphase = gait->_phase;
-    // zmpscope[0] = xref;
-    // zmpscope[1] = yref;
-
-   
-   cout << "zmpwalk 迭代步: " << Iter << '\n';
-
-   
-
+    cout << "zmpwalk 迭代步: " << Iter << '\n';
 
     // std::cout<<"Ks:\n"<<dymodelx->Ks<<'\n';
 
@@ -283,45 +279,40 @@ void Checkjoint::zmpwalk()
 
     // std::cout<<"G:\n"<<dymodelx->G<<'\n';
 
+    MatrixXf ZMP_x = dymodelx->C * dymodelx->x0;
+    float ex = ZMP_x(0, 0) - zmpxpreview(0, 0);
 
-    // MatrixXf ZMP_x=dymodelx->C*dymodelx->x0;
-    // float ex=ZMP_x(0,0)-xref;
+    MatrixXf ZMP_y = dymodely->C * dymodely->x0;
+    float ey = ZMP_y(0, 0) - zmpypreview(0, 0);
 
-    // MatrixXf ZMP_y=dymodely->C*dymodely->x0;
-    // float ey=ZMP_y(0,0)-yref;
-    
-    // sum_ex+=ex;
-    // sum_ey+=ey;
+    sum_ex += ex;
+    sum_ey += ey;
 
-    // MatrixXf sum_exM;
-    // sum_exM.resize(1,1);
-    // sum_exM<<sum_ex;
+    MatrixXf sum_exM;
+    sum_exM.resize(1, 1);
+    sum_exM << sum_ex;
 
-    // MatrixXf sum_eyM;
-    // sum_eyM.resize(1,1);
-    // sum_eyM<<sum_ey;
+    MatrixXf sum_eyM;
+    sum_eyM.resize(1, 1);
+    sum_eyM << sum_ey;
 
-    
-
-    // Eigen::MatrixXf ux,uy;
+    Eigen::MatrixXf ux, uy;
     // std::cout<<"计算控制量"<<'\n';
 
-    // ux=-dymodelx->Ks*sum_exM-dymodelx->Kx*dymodelx->x0-dymodelx->G*zmpxpreview;
-    // uy=-dymodely->Ks*sum_eyM-dymodely->Kx*dymodely->x0-dymodely->G*zmpypreview;
-    // // ux=-1*dymodelx->K*dymodelx->x0+dymodelx->f*zmpxpreview;
-    // // uy=-1*dymodely->K*dymodely->x0+dymodely->f*zmpypreview;
+    ux = -dymodelx->Ks * sum_exM - dymodelx->Kx * dymodelx->x0 - dymodelx->G * zmpxpreview;
+    uy = -dymodely->Ks * sum_eyM - dymodely->Kx * dymodely->x0 - dymodely->G * zmpypreview;
+
     // std::cout<<"计算状态量"<<'\n';
-    // dymodelx->x0=dymodelx->A*dymodelx->x0+dymodelx->B*ux;
-    // dymodely->x0=dymodely->A*dymodely->x0+dymodely->B*uy;
+    dymodelx->x0 = dymodelx->A * dymodelx->x0 + dymodelx->B * ux;
+    dymodely->x0 = dymodely->A * dymodely->x0 + dymodely->B * uy;
 
-    // dyx=dymodelx->x0(0,0);
-    // dyy=dymodely->x0(0,0);
+    dyx = dymodelx->x0(0, 0);
+    dyy = dymodely->x0(0, 0);
 
+    zmpLegphasecompute();
 
-    //  uxx=ZMP_x(0,0);
-    //  uyy=ZMP_y(0,0);
-
-
+    // uxx = ZMP_x(0, 0);
+    // uyy = ZMP_y(0, 0);
 }
 
 void Checkjoint::squat()

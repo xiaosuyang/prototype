@@ -15,8 +15,8 @@
 #include "lip3d.h"
 
 #define zmpSx 0.15
-#define zmpSy 0.25
-#define PREVIEWNUM 10
+#define zmpSy 0.12
+#define PREVIEWNUM 80
 
 
 using namespace Eigen;
@@ -48,11 +48,12 @@ public:
     StateEstimatorContainer* esptr) : ioptr(io),statectrl(ctrl),_stateEstimator(esptr)
     {
         for(int i=0;i<2;i++) statectrl->data[i].zero();
-        walking=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
+        //walking=new Gait(60, Vec2<int>(0, 30), Vec2<int>(30, 30), "Walking");
         float para=0.5;
         walkzmp=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
         zmppre=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
-        gaitsquat=new Gait(60*2, Vec2<int>(0, 50*2), Vec2<int>(2*10, 2*50), "Walking");
+        zmpfoot=new Gait(2*para*60,Vec2<int>(0,0),Vec2<int>(para*60+0.1*para*60, para*60+0.1*para*60),"ZMPfoot_schedule");
+       // gaitsquat=new Gait(60*2, Vec2<int>(0, 50*2), Vec2<int>(2*10, 2*50), "Walking");
 
         for(int i=0;i<PREVIEWNUM;i++)
         {
@@ -89,7 +90,9 @@ public:
         _lowCmd = NULL;
         _lowState = NULL;
     }
-    void checkgait();
+    //void checkgait();
+
+    void zmpLegphasecompute();
 
     void checkgait1();
 
@@ -173,6 +176,7 @@ public:
     Gait* walkzmp;
     Gait* gaitsquat;
     Gait * zmppre;
+    Gait* zmpfoot;
     int iterationsBetweenMPC=4;
     int horizonLength=30;
     FootSwingTrajectory<double> footSwingTrajectories[2];
@@ -226,6 +230,10 @@ public:
     float xreflist[PREVIEWNUM];
     //float * yreflist;
     float yreflist[PREVIEWNUM];
+
+    int Iter=0;
+
+    
 
 
 };

@@ -74,7 +74,6 @@ class fuzzypid
     void inputset(float input_p)
     {
         input=input_p;
-
     }
 
     FPIDDirection controllerDirection;

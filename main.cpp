@@ -216,6 +216,7 @@ float cphasescope[2]={0,0};
 float walkphase;
 float dyx,dyy;
 float uxx,uyy;
+float rlegswingphase,rlegcontactphase;
 
 bool firstrun = true;
 /*
@@ -825,7 +826,8 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f\n", AHRSData_Packet.Roll, AHRSData_Packet.Pitch, AHRSData_Packet.Heading,
         //         IMUData_Packet.accelerometer_x, IMUData_Packet.accelerometer_y, IMUData_Packet.accelerometer_z);
         sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
-        walkphase,dyx,dyy,uxx,uyy);
+        walkphase,dyx,dyy,rlegswingphase,rlegcontactphase);
+        
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
     }
