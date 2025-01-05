@@ -5,7 +5,7 @@
 #include "utility/cppTypes.h"
 #include "math/orientation_tools.h"
 #include "math/MathUtilities.h"
-
+extern float zmpInitialq[12];
 class Biped
 {
 public:
@@ -54,7 +54,7 @@ public:
     // std::array<double,6> Initialq{0,0,-0.338,0.7616,-0.425,0};
     // double Initialq[6]={0,0,-0.338,0.7616,-0.425,0};
     double Initialq[6] = {0, 0, -0.245154, 0.551675, -0.30652, 0};
-
+  
     const float J0gangW = 1.32e-4;
     const float J0gangY = 0.69e-4;
     const float J1gangW = 1.32e-4;
@@ -79,6 +79,9 @@ public:
     float rlacc;
     float rlspeed;
     bool AngleInit(float &rj1,float &rj2, float &rj3, float &rj4,float &rj5 ,
+float &lj1,float &lj2, float &lj3, float &lj4,float &lj5);
+
+bool zmpAngleInit(float &rj1,float &rj2, float &rj3, float &rj4,float &rj5 ,
 float &lj1,float &lj2, float &lj3, float &lj4,float &lj5);
 
     // const std::vector<Point> points = {

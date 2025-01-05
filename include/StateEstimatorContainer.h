@@ -58,6 +58,7 @@ struct StateEstimate {
     Vec3<double> omegaWorld;
     Vec3<double> vWorld;
     Vec3<double> aBody, aWorld;
+    Vec3<float> DesiredPos;//世界坐标系下期望位置
 };
 
 

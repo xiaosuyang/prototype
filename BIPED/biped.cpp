@@ -1,6 +1,8 @@
 #include "biped.h"
 #include "math/orientation_tools.h"
 
+extern float zmpInitialq[12];
+
 void Biped::RJ0RJ1convert(float DEG_0, float DEG_1, float &L0, float &L1)
 {
     DEG_0 = deg2rad(DEG_0);
@@ -113,6 +115,40 @@ float &lj1,float &lj2, float &lj3, float &lj4,float &lj5)
     //rj5=lj5=timer/2*(-1.11);
     timer += sampletime;
     return false;
+}
+
+bool Biped::zmpAngleInit(float &rj1,float &rj2, float &rj3, float &rj4,float &rj5 ,
+float &lj1,float &lj2, float &lj3, float &lj4,float &lj5)
+{
+    if (timer > 2)
+    {
+    rj1=rad2deg(zmpInitialq[1]);
+    lj1=rad2deg(zmpInitialq[1+6]);
+    rj5=rad2deg(zmpInitialq[5]);
+    lj5=rad2deg(zmpInitialq[5+6]);
+    rj2 = lj2 = rad2deg(zmpInitialq[2]);
+    rj3 = lj3 = rad2deg(zmpInitialq[3]);
+    rj4 = lj4 = rad2deg(zmpInitialq[4]);
+        return true;
+    }
+   // lj1=rj1=timer/2*1.11;
+   std::cout<<"ZMP角度初始值:\n";
+   for(int i=0;i<6;i++)
+   {
+    std::cout<<zmpInitialq[i]<<'\n';
+   }
+
+    rj1=timer/2*rad2deg(zmpInitialq[1]);
+    lj1=timer/2*rad2deg(zmpInitialq[1+6]);
+    rj5=timer/2*rad2deg(zmpInitialq[5]);
+    lj5=timer/2*rad2deg(zmpInitialq[5+6]);
+    rj2 = lj2 = timer / 2 * rad2deg(zmpInitialq[2]);
+    rj3 = lj3 = timer / 2 * rad2deg(zmpInitialq[3]);
+    rj4 = lj4 = timer / 2 * rad2deg(zmpInitialq[4]);
+    //rj5=lj5=timer/2*(-1.11);
+    timer += sampletime;
+    return false;
+
 }
 
 void Biped::computepumpvel(float jointdeg1[])

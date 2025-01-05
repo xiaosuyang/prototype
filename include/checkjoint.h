@@ -52,7 +52,11 @@ public:
         float para=0.5;
         walkzmp=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
         zmppre=new Gait(para*60, Vec2<int>(0, para*40), Vec2<int>(para*40, para*40), "zmpWalking");
-        zmpfoot=new Gait(2*para*60,Vec2<int>(0,0),Vec2<int>(para*60+0.1*para*60, para*60+0.1*para*60),"ZMPfoot_schedule");
+        int wholephase=2*para*60;
+        int stancephase=para*(60+0.2*60);
+        int offsetL=wholephase-0.05*60*para;
+        int offsetR=para*60-0.05*60*para;
+        zmpfoot=new Gait(wholephase,Vec2<int>(offsetR,offsetL),Vec2<int>(stancephase, stancephase),"ZMPfoot_schedule");
        // gaitsquat=new Gait(60*2, Vec2<int>(0, 50*2), Vec2<int>(2*10, 2*50), "Walking");
 
         for(int i=0;i<PREVIEWNUM;i++)
@@ -71,11 +75,13 @@ public:
         _lowCmd=cmdex;
         _lowState=statex;
 
+        DesiredPos.setZero();
         // plotsub[0]=_nc.advertise<std_msgs::Float32>( "plot1", 10);
         // plotsub[1]=_nc.advertise<std_msgs::Float32>( "plot2", 10);
         // plotsub[2]=_nc.advertise<std_msgs::Float32>( "plot3", 10);
         Footpos[0].setZero();
         Footpos[1].setZero();
+        GetzmpinitAngle();
 
     }
     ~Checkjoint()
@@ -92,6 +98,8 @@ public:
     }
     //void checkgait();
 
+    void GetzmpinitAngle();
+
     void zmpLegphasecompute();
 
     void checkgait1();
@@ -101,6 +109,8 @@ public:
     void zmpgenerate(int deltapre);
 
     void zmpwalk();
+
+    void Setjointpos( Vec6<double> QDes[2]);
 
     void staystill()
     {
@@ -192,13 +202,16 @@ public:
     IOInterface* ioptr;
     Vec2<double> swingTimes;
     Vec3<float> Footpos[2];
+
     StateEstimatorContainer* _stateEstimator;
+    Vec3<float> DesiredPos;//世界坐标系下期望位置
     Vec3<double> pDesFootWorld[2] ;
     Vec3<double> vDesFootWorld[2] ;
     Vec3<double> pDesFoot[2] ;
     Vec3<double> vDesFoot[2] ;
 
     bool firstSwing[2] = {false, true};
+    bool firstSwingzmp[2]={true,false};
 
     bool firstSwingpre[2] = {true, true};
     bool startwalk=false;
@@ -232,6 +245,8 @@ public:
     float yreflist[PREVIEWNUM];
 
     int Iter=0;
+
+    float refheight=1.12;
 
     
 

@@ -204,6 +204,7 @@ float Deg[3];
 float KuanDeg[2];
 float rj4angle = 0, rj5angle = 0, rj3angle = 0, rj2angle = 0, rj1angle = 0, rj0angle = 0;
 float LDeg[3];
+float RDeg[3];
 float LKuanDeg[2];
 float lj4angle = 0, lj5angle = 0, lj3angle = 0, lj2angle = 0, lj1angle = 0, lj0angle = 0;
 float Ps = 0;
@@ -217,6 +218,10 @@ float walkphase;
 float dyx,dyy;
 float uxx,uyy;
 float rlegswingphase,rlegcontactphase;
+float llegswingphase,llegcontactphase;
+float zmpInitialq[12];
+
+
 
 bool firstrun = true;
 /*
@@ -444,7 +449,8 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
             // cout<<"关节角度"<<Qt<<'\n';
             // IKinbodyframe(statectrl->_biped, QDes[foot], &Pdes[foot], foot);
-            if (bipins.AngleInit(rj1angle, rj2angle, rj3angle, rj4angle, rj5angle, lj1angle, lj2angle, lj3angle, lj4angle, lj5angle))
+            
+            if (bipins.zmpAngleInit(rj1angle, rj2angle, rj3angle, rj4angle, rj5angle, lj1angle, lj2angle, lj3angle, lj4angle, lj5angle))
             {
                 if (cmdptr->uservalue.Settime == true)
                 {
@@ -823,10 +829,17 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
         //   sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f\n",Deg[0],Deg[1],Deg[2],LDeg[0],LDeg[1],LDeg[2]);
 
-        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f\n", AHRSData_Packet.Roll, AHRSData_Packet.Pitch, AHRSData_Packet.Heading,
-        //         IMUData_Packet.accelerometer_x, IMUData_Packet.accelerometer_y, IMUData_Packet.accelerometer_z);
-        sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
-        walkphase,dyx,dyy,rlegswingphase,rlegcontactphase);
+        //ZMP
+        // sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
+        // walkphase,dyx,dyy,rlegswingphase,rlegcontactphase,llegswingphase,llegcontactphase,RDeg[0],RDeg[1],RDeg[2],LDeg[0],LDeg[1],LDeg[2]
+        // ,LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+
+        sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
+                 RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+
+        // sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", zmpInitialq[0], zmpInitialq[1],zmpInitialq[2],
+        //         zmpInitialq[3], zmpInitialq[4],zmpInitialq[5], zmpInitialq[0],zmpInitialq[1],zmpInitialq[2], zmpInitialq[3], zmpInitialq[4],
+        //         zmpInitialq[5]);
         
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
