@@ -15,7 +15,7 @@
 #include "lip3d.h"
 
 #define zmpSx 0.15
-#define zmpSy 0.12
+#define zmpSy 0.1
 #define PREVIEWNUM 80
 
 
@@ -220,7 +220,7 @@ public:
     float footxnextsquat[2]={0,0};
 
     float zmpxposref[7]={0,0,zmpSx,2*zmpSx,3*zmpSx,4*zmpSx,5*zmpSx};
-    float zmpyposref[7]={0,zmpSy,-zmpSy,zmpSy,-zmpSy,zmpSy,-zmpSy};
+    float zmpyposref[7]={0,zmpSy,-zmpSy,zmpSy,-zmpSy,zmpSy,0};
     const short totalstep=7;
     
     double swingTimeRemaining[2];

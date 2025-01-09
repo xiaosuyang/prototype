@@ -18,6 +18,8 @@ extern float uyy;
 extern float rlegswingphase, rlegcontactphase;
 extern float llegswingphase, llegcontactphase;
 extern float zmpInitialq[12];
+extern Vec3<float> Base_RPY_RAW;
+extern Vec3<float> Base_ACC_RAW;
 
 // void Checkjoint::checkgait()
 // {
@@ -244,7 +246,7 @@ void Checkjoint::zmpLegphasecompute()
             if (Iter > totalstep)
                 footSwingTrajectories[i].setHeight(0);
             else
-                footSwingTrajectories[i].setHeight(0.055);
+                footSwingTrajectories[i].setHeight(0.045);
         }
 
         swingTimes[0] = dtMPC * zmpfoot->_swing;
@@ -429,7 +431,7 @@ void Checkjoint::squat()
             Pf[i][0] = footxnow[i];
         }
 
-        footSwingTrajectories[i].setHeight(0.065);
+        footSwingTrajectories[i].setHeight(0.055);
         //   footSwingTrajectories[i].setFinalPosition(Pf[i]);
     }
 

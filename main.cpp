@@ -113,8 +113,8 @@ static CmdPanel *cmdptr = NULL;
 static unsigned int sig_alarms = 0;
 static unsigned int user_alarms = 0;
 
-int fd1;
-struct termios options1;
+int fd1, count_r3,fd2;
+struct termios options1,options2;
 
 // u8 Fd_data[64];
 // u8 Fd_rsimu[64];
@@ -212,14 +212,24 @@ float P0 = 0;
 float swingtime = 0;
 float swingtime1 = 0;
 
-float zmpscope[4]={0,0,0,0};
-float cphasescope[2]={0,0};
+float zmpscope[4] = {0, 0, 0, 0};
+float cphasescope[2] = {0, 0};
 float walkphase;
-float dyx,dyy;
-float uxx,uyy;
-float rlegswingphase,rlegcontactphase;
-float llegswingphase,llegcontactphase;
+float dyx, dyy;
+float uxx, uyy;
+float rlegswingphase, rlegcontactphase;
+float llegswingphase, llegcontactphase;
 float zmpInitialq[12];
+int error1 = 0;
+int correct1 = 0;
+int error2=0;
+int correct2=0;
+
+IMUDataprocess SX;
+IMUDataprocess SY;
+
+Vec3<float> Base_RPY_RAW;
+Vec3<float> Base_ACC_RAW;
 
 
 
@@ -253,9 +263,6 @@ void copy_arr_part(u8 src[], u8 dest[], int start, int end)
 {
     memcpy(dest, src + start, (end - start) * sizeof(u8));
 }
-
-
-
 
 void check_domain_state(void)
 {
@@ -351,6 +358,100 @@ void check_slave3_config_states(void)
     sc3_ana_in_state = s;
 }
 
+void GetIMURPYData()
+{
+    unsigned char buff3[21];
+    if ((count_r3 = read(fd2, (void *)buff3, 21)) < 0)
+        perror("ERR:No data is ready to be read\n");
+    else if (count_r3 == 0)
+        printf("ERR:No data is ready to be read\n");
+    else
+    {
+        buff3[count_r3] = 0;
+        for (int i = 0; i < count_r3 - 11; i++)
+        {
+            if ((buff3[i] == 0x55) && (buff3[i + 1] == 0x55) &&
+                (buff3[i + 2] == 0x01))
+            {
+                unsigned char sum = buff3[i] + buff3[i + 1] + buff3[i + 2] +
+                                    buff3[i + 3] + buff3[i + 4] + buff3[i + 5] +
+                                    buff3[i + 6] + buff3[i + 7] + buff3[i + 8] +
+                                    buff3[i + 9];
+                if (sum == buff3[i + 10]) 
+                {
+                    correct1++;
+                    Base_RPY_RAW[0]=(float)((int)buff3[i + 5] * 256 + (int)buff3[i + 4]) /
+                    32768.0 * 180.0;
+                    
+                    Base_RPY_RAW[1]=(float)((int)buff3[i + 7] * 256 + (int)buff3[i + 6]) /
+                    32768.0 * 180.0;
+
+                    Base_RPY_RAW[2]=(float)((int)buff3[i + 9] * 256 + (int)buff3[i + 8]) /
+                    32768.0 * 180.0;
+
+                    break;
+                }
+                else
+                error1++;
+            }
+        }
+    }
+
+}
+
+void GetIMUACCData()
+{
+    unsigned char buff3[34];
+    if ((count_r3 = read(fd1, (void *)buff3, 34)) < 0)
+        perror("ERR:No data is ready to be read\n");
+    else if (count_r3 == 0)
+        printf("ERR:No data is ready to be read\n");
+    else
+    {
+        buff3[count_r3] = 0;
+        for (int i = 0; i < count_r3 - 17; i++)
+        {
+        
+             if((buff3[i] == 0x55) && (buff3[i + 1] == 0x55) &&
+            (buff3[i + 2] == 0x03))
+            {
+                
+                unsigned char sum ;
+                for(int j=0;j<16;j++)
+                {
+                    sum+=buff3[i+j];
+                }
+                if(sum==buff3[i+16])
+                {
+                    correct2++;
+                    unsigned char AxL=buff3[i+4];
+                    unsigned char AxH=buff3[i+5];
+                    unsigned char AyL=buff3[i+6];
+                    unsigned char AyH=buff3[i+7];
+                    unsigned char AzL=buff3[i+8];
+                    unsigned char AzH=buff3[i+9];
+                    
+                    int16_t Axint=(int16_t) (AxH<<8) | AxL; 
+                    int16_t Ayint=(int16_t) (AyH<<8) | AyL; 
+                    int16_t Azint=(int16_t) (AzH<<8) | AzL; 
+
+
+                    Base_ACC_RAW[0]=(float)Axint/32768*4;
+                    Base_ACC_RAW[1]=(float)Ayint/32768*4;
+                    Base_ACC_RAW[2]=(float)Azint/32768*4;
+
+                    break;
+
+                }
+                else
+                    error2++;
+                
+         
+            }
+        }
+    }
+}
+
 void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 {
     // receive process data
@@ -377,7 +478,7 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
         // P(2) = -1 * LEGlength - 0.07 * LEGlength * (cos(0.2 * M_PI * time + 1.5 * M_PI) - 1);
         // Deg[0] = 1*(14 * cos(0.2 * M_PI * time) - 14);
         // Deg[0] = 1*(14 * sin(0.2 * M_PI * time));
-  
+
         rj0angle = 0;
         rj1angle = 0;
         rj2angle = 0;
@@ -436,6 +537,9 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
         cout << "PS压力:\n"
              << Ps << '\n';
 
+        cout<<"Base 姿态ZYX:\n"<<Base_RPY_RAW<<'\n';
+        cout<<"Base 加速度:\n"<<Base_ACC_RAW<<'\n';
+
         // for (int i = 0; i < 12; i++)
         //    std::cout<<"编码器"<<i<< SSI[i] <<'\n';zz
         //   bool firstrun=true;
@@ -449,7 +553,7 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
             // cout<<"关节角度"<<Qt<<'\n';
             // IKinbodyframe(statectrl->_biped, QDes[foot], &Pdes[foot], foot);
-            
+
             if (bipins.zmpAngleInit(rj1angle, rj2angle, rj3angle, rj4angle, rj5angle, lj1angle, lj2angle, lj3angle, lj4angle, lj5angle))
             {
                 if (cmdptr->uservalue.Settime == true)
@@ -497,7 +601,7 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
             //    rj2angle=10*sin(0.5*M_PI*time);
             //    legpre1[2]=10*sin(0.5*M_PI*(time  -bipins.sampletime));
-            //    legpre2[2]=10*sin(0.5*M_PI*(time+bipins.sampletime));   
+            //    legpre2[2]=10*sin(0.5*M_PI*(time+bipins.sampletime));
 
             //    lj2angle=10*sin(0.5*M_PI*time);
             //    legpre1[8]=10*sin(0.5*M_PI*(time  -bipins.sampletime));
@@ -829,17 +933,24 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
         //   sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f\n",Deg[0],Deg[1],Deg[2],LDeg[0],LDeg[1],LDeg[2]);
 
-        //ZMP
-        // sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
-        // walkphase,dyx,dyy,rlegswingphase,rlegcontactphase,llegswingphase,llegcontactphase,RDeg[0],RDeg[1],RDeg[2],LDeg[0],LDeg[1],LDeg[2]
-        // ,LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+        // ZMP
+         sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
+         walkphase,dyx,dyy,rlegswingphase,rlegcontactphase,llegswingphase,llegcontactphase,RDeg[0],RDeg[1],RDeg[2],LDeg[0],LDeg[1],LDeg[2]
+         ,LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
 
-        sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
-                 RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
+        //         RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+
+        // float sx=SX.computeS(Base_ACC_RAW[0]);
+        // float sy=SY.computeS(Base_ACC_RAW[1]);
+
+        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f\n", Base_RPY_RAW[0],Base_RPY_RAW[1],Base_RPY_RAW[2],Base_ACC_RAW[0],
+        // Base_ACC_RAW[1],Base_ACC_RAW[2],sx,sy);
 
         // sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", zmpInitialq[0], zmpInitialq[1],zmpInitialq[2],
         //         zmpInitialq[3], zmpInitialq[4],zmpInitialq[5], zmpInitialq[0],zmpInitialq[1],zmpInitialq[2], zmpInitialq[3], zmpInitialq[4],
         //         zmpInitialq[5]);
+
         
 
         sendto(fd, sendBuf, strlen(sendBuf) + 1, 0, (struct sockaddr *)&saddr, sizeof(saddr));
@@ -885,61 +996,112 @@ int main(int argc, char **argv)
     saddr.sin_port = htons(9999);
     inet_pton(AF_INET, "192.168.7.1", &saddr.sin_addr.s_addr);
 
-    // if ((fd1 = open("/dev/ttyO1", O_RDWR | O_NOCTTY | O_NDELAY)) < 0)
-    // {
-    //     perror("UART: Failed to open the UART device:ttyO1.\n");
-    //     return -1;
-    // }
+    if ((fd1 = open("/dev/ttyO1", O_RDWR | O_NOCTTY | O_NDELAY)) < 0)
+    {
+        perror("UART: Failed to open the UART device:ttyO1.\n");
+        return -1;
+    }
 
-    // // 获取原有串口配置
-    // if (tcgetattr(fd1, &options1) < 0)
-    // {
-    //     return -1;
-    // }
+    // 获取原有串口配置
+    if (tcgetattr(fd1, &options1) < 0)
+    {
+        return -1;
+    }
 
-    // // 修改控制模式，保证程序不会占用串口
-    // options1.c_cflag |= CLOCAL;
+    // 修改控制模式，保证程序不会占用串口
+    options1.c_cflag |= CLOCAL;
 
-    // // 修改控制模式，能够从串口读取数据
-    // options1.c_cflag |= CREAD;
+    // 修改控制模式，能够从串口读取数据
+    options1.c_cflag |= CREAD;
 
-    // // 不使用流控制
-    // options1.c_cflag &= ~CRTSCTS;
+    // 不使用流控制
+    options1.c_cflag &= ~CRTSCTS;
 
-    // // 设置数据位
-    // options1.c_cflag &= ~CSIZE;
-    // options1.c_cflag |= CS8;
+    // 设置数据位
+    options1.c_cflag &= ~CSIZE;
+    options1.c_cflag |= CS8;
 
-    // // 设置奇偶校验位
-    // options1.c_cflag &= ~PARENB;
-    // options1.c_iflag &= ~INPCK;
+    // 设置奇偶校验位
+    options1.c_cflag &= ~PARENB;
+    options1.c_iflag &= ~INPCK;
 
-    // // 设置停止位
-    // options1.c_cflag &= ~CSTOPB;
+    // 设置停止位
+    options1.c_cflag &= ~CSTOPB;
 
-    // // 设置最少字符和等待时间
-    // options1.c_cc[VMIN] = 1;  // 读数据的最小字节数
-    // options1.c_cc[VTIME] = 0; // 等待第1个数据，单位是10s
+    // 设置最少字符和等待时间
+    options1.c_cc[VMIN] = 1;  // 读数据的最小字节数
+    options1.c_cc[VTIME] = 0; // 等待第1个数据，单位是10s
 
-    // // 修改输出模式，原始数据输出
-    // options1.c_oflag &= ~OPOST;
-    // options1.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+    // 修改输出模式，原始数据输出
+    options1.c_oflag &= ~OPOST;
+    options1.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
-    // // 设置波特率
-    // cfsetispeed(&options1, B115200);
-    // cfsetospeed(&options1, B115200);
+    // 设置波特率
+    cfsetispeed(&options1, B460800);
+    cfsetospeed(&options1, B460800);
 
-    // // 清空终端未完成的数据
-    // tcflush(fd1, TCIFLUSH);
+    // 清空终端未完成的数据
+    tcflush(fd1, TCIFLUSH);
 
-    // // 设置新属性
-    // if (tcsetattr(fd1, TCSANOW, &options1) < 0)
-    // {
-    //     return -1;
-    // }
+    // 设置新属性
+    if (tcsetattr(fd1, TCSANOW, &options1) < 0)
+    {
+        return -1;
+    }
+
+    if ((fd2 = open("/dev/ttyO2", O_RDWR | O_NOCTTY | O_NDELAY)) < 0) {
+      perror("UART: Failed to open the UART device:ttyO2.\n");
+      return -1;
+    }
+
+    // 获取原有串口配置
+    if (tcgetattr(fd2, &options2) < 0) {
+      return -1;
+    }
+
+    // 修改控制模式，保证程序不会占用串口
+    options2.c_cflag |= CLOCAL;
+
+    // 修改控制模式，能够从串口读取数据
+    options2.c_cflag |= CREAD;
+
+    // 不使用流控制
+    options2.c_cflag &= ~CRTSCTS;
+
+    // 设置数据位
+    options2.c_cflag &= ~CSIZE;
+    options2.c_cflag |= CS8;
+
+    // 设置奇偶校验位
+    options2.c_cflag &= ~PARENB;
+    options2.c_iflag &= ~INPCK;
+
+    // 设置停止位
+    options2.c_cflag &= ~CSTOPB;
+
+    // 设置最少字符和等待时间
+    options2.c_cc[VMIN] = 1;  // 读数据的最小字节数
+    options2.c_cc[VTIME] = 0; //等待第1个数据，单位是10s
+
+    // 修改输出模式，原始数据输出
+    options2.c_oflag &= ~OPOST;
+    options2.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+
+    // 设置波特率
+    cfsetispeed(&options2, B115200);
+    cfsetospeed(&options2, B115200);
+
+    // 清空终端未完成的数据
+    tcflush(fd2, TCIFLUSH);
+
+    // 设置新属性
+    if (tcsetattr(fd2, TCSANOW, &options2) < 0) {
+      return -1;
+    }
 
     // control设置
-    double dt = 0.001;
+
+    double dt = 0.01;
     Biped robot;
     CheatIO *IOptr = new CheatIO("biped");
     LegController *Legctrlptr = new LegController(robot);
@@ -1000,7 +1162,7 @@ int main(int argc, char **argv)
     if (!domain)
         return -1;
 
-    // ⽤宏定义配置master和slave 数字信号输⼊的从站/供应商ID产品代码
+        // ⽤宏定义配置master和slave 数字信号输⼊的从站/供应商ID产品代码
 #if CONFIGURE_PDOS
     if (!(sc1 = ecrt_master_slave_config(
               master, BusCouplerPos1, TI_AM3359ICE)))
@@ -1474,7 +1636,12 @@ int main(int argc, char **argv)
                 time = 0;
 
             // cyclic_task(bipedinstance, time, NULL);
+            GetIMUACCData();
+            tcflush(fd1, TCIFLUSH);
+            // GetIMURPYData();
+            // tcflush(fd2,TCIFLUSH);
             cyclic_task(bipedinstance, time, _FSMController);
+         //   GetIMUData();
 
             user_alarms++;
             //  std::cout << "时间: " << time << '\n';

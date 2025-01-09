@@ -1,7 +1,7 @@
 #include "biped.h"
 #include "math/orientation_tools.h"
 
-extern float zmpInitialq[12];
+
 
 void Biped::RJ0RJ1convert(float DEG_0, float DEG_1, float &L0, float &L1)
 {
@@ -132,11 +132,11 @@ float &lj1,float &lj2, float &lj3, float &lj4,float &lj5)
         return true;
     }
    // lj1=rj1=timer/2*1.11;
-   std::cout<<"ZMP角度初始值:\n";
-   for(int i=0;i<6;i++)
-   {
-    std::cout<<zmpInitialq[i]<<'\n';
-   }
+//    std::cout<<"ZMP角度初始值:\n";
+//    for(int i=0;i<6;i++)
+//    {
+//     std::cout<<zmpInitialq[i]<<'\n';
+//    }
 
     rj1=timer/2*rad2deg(zmpInitialq[1]);
     lj1=timer/2*rad2deg(zmpInitialq[1+6]);

@@ -5,6 +5,7 @@
 #include "utility/cppTypes.h"
 #include "math/orientation_tools.h"
 #include "math/MathUtilities.h"
+
 extern float zmpInitialq[12];
 class Biped
 {
