@@ -528,17 +528,17 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
         Ps = Ps / 100;
 
-        // cout << "A,B口压力： " << PressureA[2] << '\n';
-        // cout << PressureB[2] << '\n';
+        cout << "A,B口压力： " << PressureA[2] << '\n';
+        cout << PressureB[2] << '\n';
 
-        // cout << "LA,B口压力： " << PressureA[8] << '\n';
-        // cout << PressureB[8] << '\n';
+        cout << "LA,B口压力： " << PressureA[8] << '\n';
+        cout << PressureB[8] << '\n';
 
         cout << "PS压力:\n"
              << Ps << '\n';
 
-        cout<<"Base 姿态ZYX:\n"<<Base_RPY_RAW<<'\n';
-        cout<<"Base 加速度:\n"<<Base_ACC_RAW<<'\n';
+        // cout<<"Base 姿态ZYX:\n"<<Base_RPY_RAW<<'\n';
+        // cout<<"Base 加速度:\n"<<Base_ACC_RAW<<'\n';
 
         // for (int i = 0; i < 12; i++)
         //    std::cout<<"编码器"<<i<< SSI[i] <<'\n';zz
@@ -562,12 +562,19 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
                 }
             }
 
-            // legpre1[0]=rj0angle ;
-            // legpre1[1]=rj1angle ;
-            // legpre1[2]=rj2angle ;
-            // legpre1[3]=rj3angle ;
-            // legpre1[4]=rj4angle ;
-            // legpre1[5]=rj5angle ;
+            legpre1[0]=rj0angle ;
+            legpre1[1]=rj1angle ;
+            legpre1[2]=rj2angle ;
+            legpre1[3]=rj3angle ;
+            legpre1[4]=rj4angle ;
+            legpre1[5]=rj5angle ;
+
+            legpre1[6]=lj0angle ;
+            legpre1[7]=lj1angle ;
+            legpre1[8]=lj2angle ;
+            legpre1[9]=lj3angle ;
+            legpre1[10]=lj4angle ;
+            legpre1[11]=lj5angle ;
             /** 右腿流量前馈调试
             rj3angle=20*sin(1*M_PI*time+1.5*M_PI)+20;
             legpre2[3]=20*sin(1*M_PI*(time+0.5+bipins.sampletime)+1.5*M_PI)+20;
@@ -722,9 +729,10 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
 
         bipins.computepumpvel(legpre1);
 
-        // bipins.computepumpvel(legpre1,legpre2,legpre1_5);
-        // cout << "泵前馈:\n"
-        //      << bipins.pumpvelFF << '\n';
+       // bipins.computepumpvel(legpre1,legpre2,legpre1_5);
+        cout << "泵前馈:\n"
+             << bipins.pumpvelFF << '\n';
+        float pumpfff=bipins.pumpvelFF;
         bipins.pumpvelFF = bipins.pumpvelFF << 16;
         EC_WRITE_U32(domain_pd + off_bytes_0x7030_1, bipins.pumpvelFF);
 
@@ -927,16 +935,16 @@ void cyclic_task(Biped &bipins, float time, FSM *_FSMController)
         //  sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", *TR_data[0], *TR_data[1], *TR_data[2],
         //          *TR_data[3], *TR_data[4], *TR_data[5], RJDES[0], RJDES[1], RJDES[2], RJDES[3], RJDES[4], RJDES[5], Deg[2], LDeg[2], (float)PressureA[2], (float)PressureB[2], PID_ptr_M[2].FF, PID_ptr_M[2].FFP, u, Ps);
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",  Deg[0], Deg[1],Deg[2], LDeg[0], LDeg[1], LDeg[2],RJDES[0],RJDES[1],RJDES[2],RJDES[3],RJDES[4],RJDES[5],ifswing);
-        // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
-        //         RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5], *TR_data[0], *TR_data[1], *TR_data[2],
-        //         *TR_data[3], *TR_data[4], *TR_data[5], *TR_data[6], *TR_data[7], *TR_data[8], *TR_data[9], *TR_data[10], *TR_data[11], PressureA[2], PressureB[2], PressureA[8], PressureB[8]);
+        sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
+                RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5], *TR_data[0], *TR_data[1], *TR_data[2],
+                *TR_data[3], *TR_data[4], *TR_data[5], *TR_data[6], *TR_data[7], *TR_data[8], *TR_data[9], *TR_data[10], *TR_data[11], PressureA[2], PressureB[2], PressureA[8], PressureB[8],Ps,pumpfff);
 
         //   sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f\n",Deg[0],Deg[1],Deg[2],LDeg[0],LDeg[1],LDeg[2]);
 
         // ZMP
-         sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
-         walkphase,dyx,dyy,rlegswingphase,rlegcontactphase,llegswingphase,llegcontactphase,RDeg[0],RDeg[1],RDeg[2],LDeg[0],LDeg[1],LDeg[2]
-         ,LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
+        //  sprintf(sendBuf,"d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",zmpscope[0],zmpscope[1],zmpscope[2],zmpscope[3],
+        //  walkphase,dyx,dyy,rlegswingphase,rlegcontactphase,llegswingphase,llegcontactphase,RDeg[0],RDeg[1],RDeg[2],LDeg[0],LDeg[1],LDeg[2]
+        //  ,LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
 
         // sprintf(sendBuf, "d:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", RJDES[0], RJDES[1], RJDES[2],
         //         RJDES[3], RJDES[4], RJDES[5], LJDES[0], LJDES[1], LJDES[2], LJDES[3], LJDES[4], LJDES[5]);
@@ -1571,15 +1579,15 @@ int main(int argc, char **argv)
    PIDK: 0.065,0.024,0,-0.02
     PIDK1: 0.097,0.04
    */
-    PIDInit(&PID_ptr_M[2], 0.08, 0.06, 0, 0.02, controltime, -9, 9, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[2], 0.095, 0.045, 0, 0.022, controltime, -9, 9, AUTOMATIC, DIRECT);
 
     // FPID_ptr[2].fuzzypid_init(0.09, 0.025, 0.02, controltime, F_DIRECT);
     // FPID_ptr[2].Fuzzyset(0.01, -0.01, 0.005, -0.005, 2.5, -2.5);
-    /*
+    /*S
     PIDK: 0.06,0.004,0,0.0811
     PIDKL:0.045, 0.016, 0, 0.027
     */
-    PIDInit(&PID_ptr_M[3], 0.06, 0.02, 0, 0.02, controltime, -9, 9, AUTOMATIC, DIRECT);
+    PIDInit(&PID_ptr_M[3], 0.12, 0.04, 0, 0.011, controltime, -9, 9, AUTOMATIC, DIRECT);
     /*
      PIDK:0.35, 0.05, 0, -0.05 REVERSE 单关节0.25Hz
      */

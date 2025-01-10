@@ -14,8 +14,8 @@
 #include "StateEstimatorContainer.h"
 #include "lip3d.h"
 
-#define zmpSx 0.15
-#define zmpSy 0.1
+#define zmpSx 0.12
+#define zmpSy 0.02
 #define PREVIEWNUM 80
 
 
